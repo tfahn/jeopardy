@@ -9,8 +9,12 @@ let audioCtx = null;
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
+
+// Unlock audio on first user interaction
+document.addEventListener('click', () => { getAudioCtx(); }, { once: true });
 
 function sfxBuzz() {
   const ctx = getAudioCtx();
@@ -100,6 +104,19 @@ function sfxPoints(positive) {
   if (positive) sfxCorrect();
   else sfxWrong();
 }
+
+// Audio unlock overlay — board needs one click before sounds work
+(function() {
+  const overlay = document.createElement('div');
+  overlay.id = 'audio-unlock';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  overlay.innerHTML = '<div style="text-align:center;"><div style="font-size:64px;margin-bottom:20px;">🔊</div><div style="font-size:24px;color:var(--gold);font-weight:700;">Klicken um Sound zu aktivieren</div></div>';
+  overlay.addEventListener('click', () => {
+    getAudioCtx();
+    overlay.remove();
+  }, { once: true });
+  document.body.appendChild(overlay);
+})();
 
 socket.on('connect', () => socket.emit('register', 'board'));
 
