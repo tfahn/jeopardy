@@ -286,6 +286,7 @@ io.on('connection', socket => {
       category: game.categories[col].name,
     };
     game.phase = 'question';
+    io.emit('sfx', 'select');
     game.buzzes = [];
     game.buzzerLocked = false;
     game.buzzerOut = [];
@@ -400,7 +401,11 @@ io.on('connection', socket => {
   // ---- Host Controls ----
   socket.on('award-points', ({ teamId, points }) => {
     const team = game.teams.find(t => t.id === teamId);
-    if (team) { team.score += points; broadcast(); }
+    if (team) {
+      team.score += points;
+      io.emit('sfx', points > 0 ? 'correct' : 'wrong');
+      broadcast();
+    }
   });
 
   socket.on('show-answer', () => {

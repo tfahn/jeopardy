@@ -5,8 +5,109 @@ let answerShown = false;
 let revealedTeamAnswers = [];
 let mapInstance = null;
 let mapMarkers = [];
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function sfxBuzz() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(800, ctx.currentTime);
+  osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.25, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+  osc.start(); osc.stop(ctx.currentTime + 0.3);
+}
+
+function sfxCorrect() {
+  const ctx = getAudioCtx();
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
+    osc.start(ctx.currentTime + i * 0.12);
+    osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+  });
+}
+
+function sfxWrong() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(200, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(120, ctx.currentTime + 0.4);
+  gain.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+  osc.start(); osc.stop(ctx.currentTime + 0.5);
+}
+
+function sfxReveal() {
+  const ctx = getAudioCtx();
+  [440, 554, 659, 880].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.4);
+    osc.start(ctx.currentTime + i * 0.08);
+    osc.stop(ctx.currentTime + i * 0.08 + 0.4);
+  });
+}
+
+function sfxTimerEnd() {
+  const ctx = getAudioCtx();
+  for (let i = 0; i < 3; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.value = 440;
+    gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.2 + 0.15);
+    osc.start(ctx.currentTime + i * 0.2);
+    osc.stop(ctx.currentTime + i * 0.2 + 0.15);
+  }
+}
+
+function sfxSelect() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(400, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.15, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+  osc.start(); osc.stop(ctx.currentTime + 0.2);
+}
+
+function sfxPoints(positive) {
+  if (positive) sfxCorrect();
+  else sfxWrong();
+}
 
 socket.on('connect', () => socket.emit('register', 'board'));
+
+socket.on('sfx', type => {
+  if (type === 'correct') sfxCorrect();
+  else if (type === 'wrong') sfxWrong();
+  else if (type === 'select') sfxSelect();
+});
 
 socket.on('state', s => {
   state = s;
@@ -17,6 +118,7 @@ socket.on('state', s => {
 
 socket.on('show-answer', data => {
   answerShown = data;
+  sfxReveal();
   renderQuestion();
 });
 
@@ -25,6 +127,7 @@ socket.on('buzzer-locked', data => {
   if (!state.buzzes) state.buzzes = [];
   if (data.playerName) state.buzzes.push(data);
   state.buzzerLocked = true;
+  sfxBuzz();
   // Auto-pause any playing media
   pauseAllMedia();
   // Hide image so buzzer can't keep looking
@@ -35,6 +138,7 @@ socket.on('buzzer-locked', data => {
 socket.on('buzzer-unlocked', () => {
   if (!state) return;
   state.buzzerLocked = false;
+  sfxWrong();
   // Show image again and restart blur animation from beginning
   document.querySelectorAll('img.question-image.buzz-hidden').forEach(img => {
     img.classList.remove('buzz-hidden');
@@ -67,7 +171,7 @@ socket.on('start-timer', seconds => {
   showBoardTimer(remaining);
   boardTimerInterval = setInterval(() => {
     remaining--;
-    if (remaining <= 0) { clearInterval(boardTimerInterval); removeBoardTimer(); return; }
+    if (remaining <= 0) { clearInterval(boardTimerInterval); removeBoardTimer(); sfxTimerEnd(); return; }
     showBoardTimer(remaining);
   }, 1000);
 });
