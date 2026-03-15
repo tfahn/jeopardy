@@ -1,0 +1,480 @@
+{
+  "categories": [
+    {
+      "name": "Das klingt broken 💀",
+      "questions": [
+        {
+          "type": "lineup",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion? Welche Fähigkeit?"
+            }
+          ],
+          "hints": [
+            "Stun der mit Ability Power und dem %maxHP des Gegners skaliert",
+            "Reduziert Schaden durch AoE-Effekte von Champions um 25%",
+            "Der Schaden erhöht sich abhängig davon, wie viele Auto-Attacks man erhält während die Fähigkeit aktiv ist"
+          ],
+          "answer": "Jax E — Counter Strike"
+        },
+        {
+          "type": "lineup",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion? Welche Fähigkeit?"
+            }
+          ],
+          "hints": [
+            "Verursacht bei Aktivierung magischen Schaden an nahen Gegnern",
+            "Erlittene Angriffe reduzieren die Abklingzeit on-hit",
+            "Reduziert den erhaltenen physischen Schaden um einen festen Wert"
+          ],
+          "answer": "Amumu E — Tantrum"
+        },
+        {
+          "type": "lineup",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion? Welche Fähigkeit?"
+            }
+          ],
+          "hints": [
+            "Takedowns in einem bestimmten Zeitrahmen, verlängern die Dauer des Effekts um 4 Sekunden, bis hin zur ursprünglichen Wirkungsdauer",
+            "Verdreifacht bei Aktivierung den Bonus, den der Champion durch seine Passive erhält",
+            "Reduziert die Abklingzeit einer anderen Fähigkeit um bis zu 50%"
+          ],
+          "answer": "Vayne R — Final Hour"
+        },
+        {
+          "type": "lineup",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion? Welche Fähigkeit?"
+            }
+          ],
+          "hints": [
+            "Unterbricht bei Champion-Treffer kanalisierte Fähigkeiten des Ziels und befreit den Nutzer von sämtlichen CC-Effekten",
+            "Gewährt dem Nutzer Bonus Armor, Bonus MR, Life Steal, Ghosting, Bonus Attack Speed & Bonus Movementspeed und Standard Sight",
+            "Feared alle Gegner um den getroffenen Champion für 1,5 Sekunden, sobald der Nutzer sein Ziel erreicht hat"
+          ],
+          "answer": "Briar R — Certain Death"
+        },
+        {
+          "type": "lineup",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion? Welche Fähigkeit?"
+            }
+          ],
+          "hints": [
+            "Verursacht magischen Schaden am Zielgebiet und verlangsamt getroffene Gegner",
+            "Kills mit dieser Fähigkeit verringern die Abklingzeit der Passive",
+            "Der Radius der Fähigkeit Skaliert mit der Zauberdistanz"
+          ],
+          "answer": "Vex E — Looming Darkness"
+        }
+      ]
+    },
+    {
+      "name": "Impostor 🕵️",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Ambessa"
+            },
+            {
+              "type": "image",
+              "text": "P",
+              "media": "/media/uploads/Ambessa_Passive-1773590334001.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Ambessa_Q-1773590396911.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Ambessa_W-1773590401209.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Samira_W-1773590443678.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Ambessa_R-1773590451994.png"
+            }
+          ],
+          "answer": "E -> Samira W"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Aurelion Sol"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Aurelion_Sol_Passive-1773589769095.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Aurelion_Sol_Q-1773589739028.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Aurelion_Sol_W-1773589807125.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Diana_E-1773589857004.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Aurelion_Sol_R-1773589863883.png"
+            }
+          ],
+          "answer": "E -> Diana W"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lulu"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Lulu_Passive-1773590870546.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Vel_Koz_Q-1773590876155.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Lulu_W-1773590882023.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Lulu_E-1773590885529.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Lulu_R-1773590889989.png"
+            }
+          ],
+          "answer": "Q -> Velkoz Q"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Hecarim"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Hecarim_Passive-1773591000979.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Hecarim_Q-1773591007034.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Karthus_E-1773591013378.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Hecarim_E-1773591018652.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Hecarim_R-1773591023590.png"
+            }
+          ],
+          "answer": "W -> Karthus E"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Warwick (2 falsch!)"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Warwick_Passive-1773590654645.png",
+              "blur": false
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Warwick_Q-1773590659882.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Naafiri_R-1773590694443.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Urgot_Q-1773590699104.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Warwick_R-1773590734618.png"
+            }
+          ],
+          "answer": "W -> Naafiri R; E -> Urgot Q"
+        }
+      ]
+    },
+    {
+      "name": "Schätzen",
+      "questions": [
+        {
+          "type": "estimate",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wie viele Champions waren verfügbar, als das Spiel veröffentlicht wurde?"
+            }
+          ],
+          "answer": "40",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wie lange dauert die Mordekaiser Ult"
+            }
+          ],
+          "answer": "7 Sekunden",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wie viel kosten diese Items zusammen"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Rapid_Firecannon_item-1773593480427.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Negatron_Cloak_item-1773593511508.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Voltaic_Cyclosword_item-1773593551593.png"
+            },
+            {
+              "type": "image",
+              "text": "",
+              "media": "/media/uploads/Scout_s_Slingshot_item-1773593602212.png"
+            }
+          ],
+          "answer": "7100 (=2650+850+3000+600)",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wie lang dauert diese Kombination von Stuns (max possible)\nAshe R + Fiora W + Volibear Q"
+            }
+          ],
+          "answer": "6,5 Sekunden (3,5+2+1)",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wie lang ist der maximal mögliche Death-Timer"
+            }
+          ],
+          "answer": "78.75s",
+          "answerPlayer": 0
+        }
+      ]
+    },
+    {
+      "name": "Trivia / Lore",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion wurde laut Lore in Thresh' Laterne gefangen?"
+            }
+          ],
+          "answer": "Senna"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Die Gründer von Riot Games haben sich nach zwei Champions benannt. Welche?"
+            }
+          ],
+          "answer": "Ryze (Brandon Beck) und Tryndamere (Marc Merrill)"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wofür steht der Name Zac?"
+            }
+          ],
+          "answer": "Zaun Amorphous Combatant"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Nenne 4 Abilities, die nicht mit Level 1 geskillt werden können"
+            }
+          ],
+          "answer": "Azir Q&E, Zeri W&E, Shen W,, Zilean W"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Wer schmiedete Wukongs Stab?"
+            }
+          ],
+          "answer": "Doran"
+        }
+      ]
+    },
+    {
+      "name": "Login Themes",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion hat dieses Login Theme?"
+            },
+            {
+              "type": "audio",
+              "text": "",
+              "media": "/media/uploads/Ornn_Login_Theme-1773592578911.mp3"
+            }
+          ],
+          "answer": "Ornn"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion hat dieses Login Theme?"
+            },
+            {
+              "type": "audio",
+              "text": "",
+              "media": "/media/uploads/Kindred_Login_theme-1773592791331.mp3"
+            }
+          ],
+          "answer": "Kindred"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion hat dieses Login Theme?"
+            },
+            {
+              "type": "audio",
+              "text": "",
+              "media": "/media/uploads/Warwick_Login_Theme-1773592705129.mp3"
+            }
+          ],
+          "answer": "Warwick"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion hat dieses Login Theme?"
+            },
+            {
+              "type": "audio",
+              "text": "",
+              "media": "/media/uploads/Braum_Login_Theme-1773592880211.mp3"
+            }
+          ],
+          "answer": "Braum"
+        },
+        {
+          "type": "buzzer",
+          "content": [
+            {
+              "type": "text",
+              "text": "Welcher Champion hat dieses Login Theme?"
+            },
+            {
+              "type": "audio",
+              "text": "",
+              "media": "/media/uploads/Milio_Login_Theme-1773592950413.mp3"
+            }
+          ],
+          "answer": "Milio"
+        }
+      ]
+    }
+  ]
+}

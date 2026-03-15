@@ -1,0 +1,214 @@
+{
+  "categories": [
+    {
+      "name": "Wer bin ich?",
+      "questions": [
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich wurde im 18. Jahrhundert geboren",
+            "Ich begann meine Karriere als Kind",
+            "Ich war Musiker und komponierte Hunderte Werke",
+            "Ich stamme aus Salzburg",
+            "Ich starb mit nur 35 Jahren",
+            "Mein letztes Werk, ein Requiem, blieb unvollendet",
+            "Mein Vorname ist Wolfgang Amadeus"
+          ],
+          "answer": "Wolfgang Amadeus Mozart"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich wurde auf einer Insel geboren",
+            "Ich war kleiner als die meisten denken",
+            "Ich war ein brillanter Stratege",
+            "Ich habe eine ganze Ära nach mir benannt",
+            "Ich wurde auf eine andere Insel verbannt",
+            "Die Insel heisst St. Helena",
+            "Ich war Kaiser der Franzosen"
+          ],
+          "answer": "Napoleon Bonaparte"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich bin in Osteuropa geboren",
+            "Ich habe die Welt als Künstlerin und Rebellin geprägt",
+            "Ich provoziere gerne",
+            "Ich bin die meistverkaufte Einzelkünstlerin der Musikgeschichte",
+            "Mein Name ist der einer religiösen Figur",
+            "Blonde Ambition war eine meiner berühmtesten Tourneen",
+            "'Material Girl' ist einer meiner grössten Hits"
+          ],
+          "answer": "Madonna"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich wurde in den USA geboren",
+            "Ich trug fast immer das gleiche Outfit",
+            "Ich wurde von meiner eigenen Firma gefeuert",
+            "Ich kam zurück und rettete sie",
+            "Ich habe auch Pixar mitgegründet",
+            "'Think Different' war mein Motto",
+            "Meine Firma hat ein angebissenes Obst als Logo"
+          ],
+          "answer": "Steve Jobs"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich lebte im 19. Jahrhundert in Europa",
+            "Ich war in der Wissenschaft tätig",
+            "Ich habe zwei Nobelpreise gewonnen",
+            "Ich erforschte Radioaktivität",
+            "Ich bin eine Frau und kam aus Polen",
+            "Ich habe die Elemente Polonium und Radium entdeckt",
+            "Mein Vorname ist Marie"
+          ],
+          "answer": "Marie Curie"
+        }
+      ]
+    },
+    {
+      "name": "Hör mal! 🔊",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was macht dieses Geräusch?", "media": "/media/sounds/sound-1.ogg" },
+          "answer": "Kookaburra (australischer Lachvogel)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Welches Instrument hörst du?", "media": "/media/sounds/sound-2.ogg" },
+          "answer": "Didgeridoo"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was hörst du hier?", "media": "/media/sounds/sound-3.ogg" },
+          "answer": "56k Einwahlmodem (Dial-up Internet)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Welches Instrument hörst du?", "media": "/media/sounds/sound-4.ogg" },
+          "answer": "Theremin"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was hörst du hier?", "media": "/media/sounds/sound-5.ogg" },
+          "answer": "Geigerzähler"
+        }
+      ]
+    },
+    {
+      "name": "Geografie-Genie 🌍",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches Land hat die meisten Zeitzonen?" },
+          "answer": "Frankreich (12 Zeitzonen, wegen Überseegebieten)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Wie heisst die Hauptstadt von Myanmar?" },
+          "answer": "Naypyidaw (nicht Rangun/Yangon!)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches Land hat die Form eines Stiefels?" },
+          "answer": "Italien"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "In welchem Land liegt der höchste Berg Afrikas?" },
+          "answer": "Tansania (Kilimandscharo, 5.895m)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches ist flächenmässig das kleinste Land der Welt?" },
+          "answer": "Vatikanstadt (0,44 km²)"
+        }
+      ]
+    },
+    {
+      "name": "Schätzen",
+      "questions": [
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Tasten hat ein Standard-Klavier?" },
+          "answer": "88",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele km/h erreicht ein Niesen?" },
+          "answer": "ca. 160 km/h",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Mal schlägt das Herz eines Kolibris pro Minute?" },
+          "answer": "ca. 1.200 Schläge pro Minute",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Inseln hat Indonesien?" },
+          "answer": "ca. 17.508",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Ameisen gibt es schätzungsweise auf der Erde?" },
+          "answer": "ca. 20 Billiarden (20 × 10¹⁵)",
+          "answerPlayer": 0
+        }
+      ]
+    },
+    {
+      "name": "Was zum 😈",
+      "questions": [
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Zahnarzt",
+          "answer": "Zahnarzt",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Schluckauf",
+          "answer": "Schluckauf",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Bungee-Jumping",
+          "answer": "Bungee-Jumping",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Déjà-vu",
+          "answer": "Déjà-vu",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Quantenphysik",
+          "answer": "Quantenphysik",
+          "describerIndex": 0
+        }
+      ]
+    }
+  ]
+}

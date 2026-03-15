@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeopardy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .menu { text-align: center; }
+    .menu h1 { font-size: 56px; color: var(--gold); margin-bottom: 10px; }
+    .menu p { color: var(--gray); margin-bottom: 30px; }
+    .menu a { display: block; padding: 14px 40px; margin: 10px auto; border-radius: 10px; text-decoration: none; font-size: 18px; font-weight: 700; color: white; width: 220px; text-align: center; }
+    .menu a.player { background: var(--green); }
+    .menu a.board { background: var(--blue-mid); }
+    .menu a.host { background: var(--red); }
+    .menu a.editor { background: rgba(255,255,255,0.1); color: var(--gray); border: 1px solid rgba(255,255,255,0.15); }
+    .menu a:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div class="menu">
+    <h1>JEOPARDY</h1>
+    <p>Spieleabend Quiz Board</p>
+    <a href="/player.html" class="player">Spieler</a>
+    <a href="/board.html" class="board">Board (TV / Beamer)</a>
+    <a href="/host.html" class="host">Host</a>
+    <a href="/editor.html" class="editor">Board Editor</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,184 @@
+{
+  "categories": [
+    {
+      "name": "Unnützes Wissen 🧠",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches Tier kann seinen eigenen Kopf um fast 270 Grad drehen?" },
+          "answer": "Die Eule"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "In welchem Land gibt es ein Gesetz, das Einzelhaltung von Meerschweinchen verbietet?" },
+          "answer": "Schweiz"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches chemische Element hat das Symbol 'W'?" },
+          "answer": "Wolfram (Tungsten)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "In welcher Hauptstadt wurde die erste U-Bahn der Welt eröffnet?" },
+          "answer": "London (1863, Metropolitan Railway)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches ist das einzige Säugetier, das wirklich fliegen kann (nicht nur gleiten)?" },
+          "answer": "Die Fledermaus"
+        }
+      ]
+    },
+    {
+      "name": "Kartenkunde 🗺️",
+      "questions": [
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt die Freiheitsstatue?" },
+          "answer": "New York, Liberty Island",
+          "target": { "lat": 40.6892, "lng": -74.0445 },
+          "answerPlayer": 0
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo steht die älteste Brauerei der Welt?" },
+          "answer": "Weihenstephan, Freising, Deutschland",
+          "target": { "lat": 48.3950, "lng": 11.7280 },
+          "answerPlayer": 1
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt der Marianengraben (tiefste Stelle der Erde)?" },
+          "answer": "Pazifik, östlich der Philippinen",
+          "target": { "lat": 11.3493, "lng": 142.1996 },
+          "answerPlayer": 0
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt der geografische Mittelpunkt Europas?" },
+          "answer": "Litauen, nördlich von Vilnius",
+          "target": { "lat": 54.9000, "lng": 25.3167 },
+          "answerPlayer": 1
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt die Pitcairn-Insel (Meuterei auf der Bounty)?" },
+          "answer": "Südpazifik, zwischen Neuseeland und Südamerika",
+          "target": { "lat": -25.0660, "lng": -130.1007 },
+          "answerPlayer": 0
+        }
+      ]
+    },
+    {
+      "name": "7ineup",
+      "questions": [
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Was haben diese Begriffe gemeinsam?" },
+          "hints": ["Victoria", "Albert", "Bitter", "Maracaibo", "Baikal", "Titicaca", "Bodensee"],
+          "answer": "Seen"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Was haben diese Begriffe gemeinsam?" },
+          "hints": ["Lima", "Golf", "Tango", "Echo", "Foxtrott", "Oscar", "Alpha"],
+          "answer": "NATO-Alphabet (Buchstabiertafel)"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Was haben diese Begriffe gemeinsam?" },
+          "hints": ["Diamant", "Saphir", "Silber", "Rubin", "Perle", "Gold", "Eisen"],
+          "answer": "Hochzeitstage (Diamantene Hochzeit, Silberhochzeit...)"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Was haben diese Begriffe gemeinsam?" },
+          "hints": ["Carrier", "Enterprise", "Discovery", "Challenger", "Endeavour", "Columbia", "Apollo"],
+          "answer": "Namen von Raumfahrzeugen / Space Shuttles"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Was haben diese Begriffe gemeinsam?" },
+          "hints": ["Helvetica", "Futura", "Comic Sans", "Times", "Courier", "Georgia", "Arial"],
+          "answer": "Schriftarten (Fonts)"
+        }
+      ]
+    },
+    {
+      "name": "Schätzen",
+      "questions": [
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Knochen hat ein neugeborenes Baby?" },
+          "answer": "ca. 270 (Erwachsene nur 206, viele verschmelzen)",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele verschiedene Käsesorten gibt es in Frankreich?" },
+          "answer": "ca. 1.200 – 1.600",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Liter Speichel produziert ein Mensch in seinem ganzen Leben?" },
+          "answer": "ca. 25.000 Liter",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Sprachen werden weltweit gesprochen?" },
+          "answer": "ca. 7.168",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viel Prozent des Universums besteht aus sichtbarer Materie?" },
+          "answer": "ca. 5% (Rest: Dunkle Materie ~27%, Dunkle Energie ~68%)",
+          "answerPlayer": 0
+        }
+      ]
+    },
+    {
+      "name": "Was zum 😈",
+      "questions": [
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Laufband",
+          "answer": "Laufband",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Achterbahn",
+          "answer": "Achterbahn",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Ohrwurm",
+          "answer": "Ohrwurm",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Fernweh",
+          "answer": "Fernweh",
+          "describerIndex": 0
+        },
+        {
+          "type": "chat",
+          "content": { "type": "text", "text": "Beschreibe den Begriff mit Emojis!" },
+          "secret": "Schrödingers Katze",
+          "answer": "Schrödingers Katze",
+          "describerIndex": 0
+        }
+      ]
+    }
+  ]
+}

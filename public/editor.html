@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeopardy — Board Editor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: var(--bg); color: var(--white); font-family: 'Segoe UI', system-ui, sans-serif; }
+    .editor { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .editor-header h1 { font-size: 22px; color: var(--gold); }
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .toolbar select, .toolbar input[type="text"] { padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: #1a1a5e; color: white; font-size: 14px; }
+    .toolbar select option { background: #1a1a5e; color: white; }
+
+    .category-tabs { display: flex; gap: 4px; margin-bottom: 15px; flex-wrap: wrap; }
+    .cat-tab { padding: 8px 16px; border-radius: 8px 8px 0 0; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; background: rgba(255,255,255,0.05); color: var(--gray); cursor: pointer; font-size: 14px; transition: all 0.2s; }
+    .cat-tab.active { background: rgba(255,204,0,0.15); color: var(--gold); border-color: var(--gold); }
+    .cat-tab:hover:not(.active) { background: rgba(255,255,255,0.1); }
+    .cat-tab-add { background: none; border: 1px dashed rgba(255,255,255,0.2); color: var(--gray); }
+
+    .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .cat-header input { font-size: 18px; padding: 8px 14px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--gold); font-weight: 700; flex: 1; }
+    .cat-header input:focus { border-color: var(--gold); outline: none; }
+
+    .question-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin-bottom: 12px; }
+    .question-card.dragging { opacity: 0.5; }
+    .q-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+    .q-row label { min-width: 100px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray); padding-top: 10px; }
+    .q-row .field { flex: 1; }
+    .q-row input, .q-row select, .q-row textarea { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-size: 14px; font-family: inherit; }
+    .q-row input:focus, .q-row select:focus, .q-row textarea:focus { border-color: var(--gold); outline: none; }
+    .q-row textarea { resize: vertical; min-height: 50px; }
+    .q-row select { background: #1a1a5e; }
+    .q-row select option { background: #1a1a5e; }
+
+    .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .q-header .q-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .q-points { color: var(--gold); font-weight: 800; font-size: 16px; }
+
+    .hints-list { display: flex; flex-direction: column; gap: 4px; }
+    .hint-row { display: flex; gap: 6px; align-items: center; }
+    .hint-row input { flex: 1; }
+    .hint-row .hint-num { min-width: 20px; color: var(--gold); font-weight: 700; font-size: 13px; }
+    .hint-remove { background: none; border: none; color: var(--red); cursor: pointer; font-size: 16px; padding: 4px 8px; }
+
+    .target-row { display: flex; gap: 10px; }
+    .target-row input { flex: 1; }
+
+    .add-btn { padding: 10px 16px; border-radius: 8px; border: 2px dashed rgba(255,255,255,0.2); background: none; color: var(--gray); cursor: pointer; font-size: 14px; width: 100%; transition: all 0.2s; margin-top: 5px; }
+    .add-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .status-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 10px 20px; background: rgba(10,10,46,0.95); border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); z-index: 100; }
+    .status-msg { color: var(--green); font-size: 13px; }
+    .status-msg.error { color: var(--red); }
+
+    .delete-cat { background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 6px 10px; border-radius: 6px; }
+    .delete-cat:hover { background: rgba(231,76,60,0.2); }
+    .delete-q { background: none; border: none; color: var(--red); cursor: pointer; font-size: 18px; padding: 2px 8px; }
+
+    /* Content blocks */
+    .content-blocks { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .content-block { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; }
+    .block-header { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .block-type-badge { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(255,204,0,0.15); color: var(--gold); }
+    .block-actions { margin-left: auto; display: flex; gap: 2px; }
+    .block-actions button { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; transition: color 0.2s; }
+    .block-actions button:hover { color: var(--white); }
+    .block-actions button.block-remove:hover { color: var(--red); }
+    .block-move { display: flex; gap: 2px; }
+    .block-move button { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 4px; }
+    .block-move button:hover { color: var(--gold); }
+    .block-body { padding: 10px; }
+    .block-body input, .block-body textarea { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+    .block-body input:focus, .block-body textarea:focus { border-color: var(--gold); outline: none; }
+    .block-body textarea { resize: vertical; min-height: 50px; }
+    .block-body .media-preview { margin-top: 8px; }
+    .block-body .media-preview img { max-width: 200px; max-height: 120px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+    .block-body .media-preview audio, .block-body .media-preview video { max-width: 100%; margin-top: 4px; }
+    .block-body .upload-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+    .block-body .upload-row input[type="file"] { font-size: 12px; color: var(--gray); }
+    .add-block-row { display: flex; justify-content: center; margin-top: 6px; }
+    .add-block-btn { padding: 6px 14px; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.2); background: none; color: var(--gray); cursor: pointer; font-size: 12px; transition: all 0.2s; }
+    .add-block-btn:hover { border-color: var(--gold); color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div class="editor" id="app"></div>
+  <div class="status-bar">
+    <span class="status-msg" id="status"></span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-gold" onclick="saveBoard()">Speichern</button>
+      <a href="/" class="btn btn-blue" style="text-decoration:none;">Zurück zum Spiel</a>
+    </div>
+  </div>
+  <script src="editor.js"></script>
+</body>
+</html>
