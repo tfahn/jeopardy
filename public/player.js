@@ -88,6 +88,9 @@ function removePlayerTimer() { document.getElementById('player-timer')?.remove()
 
 function render() {
   if (!state) return;
+  // Preserve name input before re-render
+  const nameInput = document.getElementById('name-input');
+  if (nameInput) playerName = nameInput.value;
   if (state.phase === 'lobby' || joinedTeamId === null) renderLobby();
   else if (state.phase === 'board') renderWaiting();
   else if (state.phase === 'question') renderQuestion();

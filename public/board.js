@@ -127,9 +127,14 @@ socket.on('sfx', type => {
 });
 
 socket.on('state', s => {
+  const questionChanged = !state || state.phase !== s.phase ||
+    state.currentQuestion?.row !== s.currentQuestion?.row ||
+    state.currentQuestion?.col !== s.currentQuestion?.col;
   state = s;
-  answerShown = false;
-  revealedTeamAnswers = [];
+  if (questionChanged) {
+    answerShown = false;
+    revealedTeamAnswers = [];
+  }
   render();
 });
 

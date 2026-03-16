@@ -25,6 +25,25 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB
 });
 
+// Host password protection
+const HOST_PASSWORD = process.env.HOST_PASSWORD || 'jeopardy';
+
+function requirePassword(req, res, next) {
+  if (req.query.pw === HOST_PASSWORD) return next();
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Host Login</title><link rel="stylesheet" href="/style.css">
+    <style>body{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+    .login{text-align:center;} .login input{padding:12px 16px;border-radius:8px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:white;font-size:18px;margin:10px 0;width:220px;}
+    .login input:focus{border-color:var(--gold);outline:none;}</style></head><body>
+    <div class="login"><h1 style="color:var(--gold);margin-bottom:10px;">Host Login</h1>
+    <form onsubmit="location.href=location.pathname+'?pw='+document.getElementById('pw').value;return false;">
+    <input type="password" id="pw" placeholder="Passwort" autofocus>
+    <br><button class="btn btn-gold" type="submit">Einloggen</button></form></div></body></html>`);
+}
+
+app.get('/host.html', requirePassword);
+app.get('/editor.html', requirePassword);
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/data', express.static(path.join(__dirname, 'data')));
 

@@ -72,7 +72,6 @@ function renderLobby() {
           `).join('') : `
             <div class="host-team-row"><input type="text" value="Team Rot" id="tn-0"><input type="color" value="#e74c3c" id="tc-0"></div>
             <div class="host-team-row"><input type="text" value="Team Blau" id="tn-1"><input type="color" value="#3498db" id="tc-1"></div>
-            <div class="host-team-row"><input type="text" value="Team Grün" id="tn-2"><input type="color" value="#2ecc71" id="tc-2"></div>
           `}
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;">
