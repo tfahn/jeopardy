@@ -127,15 +127,20 @@ socket.on('sfx', type => {
 });
 
 socket.on('state', s => {
+  const prevPhase = state?.phase;
+  const prevQuestion = state?.currentQuestion;
   const questionChanged = !state || state.phase !== s.phase ||
-    state.currentQuestion?.row !== s.currentQuestion?.row ||
-    state.currentQuestion?.col !== s.currentQuestion?.col;
+    prevQuestion?.row !== s.currentQuestion?.row ||
+    prevQuestion?.col !== s.currentQuestion?.col;
   state = s;
   if (questionChanged) {
     answerShown = false;
     revealedTeamAnswers = [];
+    render();
+  } else {
+    // Only update scores without full re-render
+    updateScores();
   }
-  render();
 });
 
 socket.on('show-answer', data => {
@@ -152,8 +157,13 @@ socket.on('buzzer-locked', data => {
   sfxBuzz();
   // Auto-pause any playing media
   pauseAllMedia();
-  // Hide image so buzzer can't keep looking
-  document.querySelectorAll('img.question-image').forEach(img => img.classList.add('buzz-hidden'));
+  // Hide image and save current blur progress
+  document.querySelectorAll('img.question-image').forEach(img => {
+    const computed = getComputedStyle(img).filter;
+    const match = computed && computed.match(/blur\(([0-9.]+)px\)/);
+    img.dataset.blurPaused = match ? match[1] : '0';
+    img.classList.add('buzz-hidden');
+  });
   renderBuzzes();
 });
 
@@ -161,12 +171,19 @@ socket.on('buzzer-unlocked', () => {
   if (!state) return;
   state.buzzerLocked = false;
   sfxWrong();
-  // Show image again and restart blur animation from beginning
+  // Show image again, continue blur from where it paused
   document.querySelectorAll('img.question-image.buzz-hidden').forEach(img => {
     img.classList.remove('buzz-hidden');
-    img.classList.remove('blur-reveal');
-    void img.offsetWidth; // force reflow to restart animation
-    img.classList.add('blur-reveal');
+    const pausedBlur = parseFloat(img.dataset.blurPaused || '50');
+    if (pausedBlur > 0.5 && img.classList.contains('blur-reveal')) {
+      // Calculate remaining time: animation is 30s total, 50px to 0px
+      const remainingSec = (pausedBlur / 50) * 30;
+      img.classList.remove('blur-reveal');
+      img.style.filter = `blur(${pausedBlur}px)`;
+      void img.offsetWidth;
+      img.style.transition = `filter ${remainingSec}s linear`;
+      img.style.filter = 'blur(0px)';
+    }
   });
   renderBuzzes();
 });
@@ -222,6 +239,19 @@ function render() {
   if (state.phase === 'lobby') renderLobby();
   else if (state.phase === 'board') renderBoard();
   else if (state.phase === 'question') renderQuestion();
+}
+
+function updateScores() {
+  if (!state) return;
+  document.querySelectorAll('.team-score').forEach((el, i) => {
+    const t = state.teams[i];
+    if (!t) return;
+    const scoreEl = el.querySelector('.score');
+    if (scoreEl) scoreEl.textContent = t.score;
+    const isActive = i === state.currentTeamIndex;
+    el.classList.toggle('active', isActive);
+    el.style.borderColor = isActive ? t.color : 'transparent';
+  });
 }
 
 function renderLobby() {

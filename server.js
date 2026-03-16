@@ -42,6 +42,7 @@ function requirePassword(req, res, next) {
 }
 
 app.get('/host.html', requirePassword);
+app.get('/board.html', requirePassword);
 app.get('/editor.html', requirePassword);
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -239,9 +240,23 @@ io.on('connection', socket => {
 
   // ---- Lobby ----
   socket.on('setup-teams', teams => {
-    game.teams = teams.map((t, i) => ({
-      id: i, name: t.name, color: t.color, score: 0, members: [],
-    }));
+    // Preserve existing members/scores when updating teams
+    game.teams = teams.map((t, i) => {
+      const existing = game.teams.find(et => et.id === i);
+      return {
+        id: i, name: t.name, color: t.color,
+        score: existing?.score ?? 0,
+        members: existing?.members ?? [],
+      };
+    });
+    // Remove teams that no longer exist — kick their players
+    io.fetchSockets().then(sockets => {
+      for (const s of sockets) {
+        if (s.data.teamId !== undefined && !game.teams.find(t => t.id === s.data.teamId)) {
+          s.data.teamId = undefined;
+        }
+      }
+    });
     broadcast();
   });
 
@@ -469,6 +484,24 @@ io.on('connection', socket => {
 
   socket.on('set-turn', idx => {
     game.currentTeamIndex = idx;
+    broadcast();
+  });
+
+  socket.on('reset-game', () => {
+    game.phase = 'lobby';
+    game.categories = [];
+    game.board = [];
+    game.currentQuestion = null;
+    game.currentTeamIndex = 0;
+    game.buzzes = [];
+    game.buzzerLocked = false;
+    game.buzzerOut = [];
+    game.teamAnswers = {};
+    game.teamChat = {};
+    game.chatRevealed = [];
+    game.revealedAnswers = [];
+    game.lineupRevealed = 0;
+    game.teams.forEach(t => { t.score = 0; });
     broadcast();
   });
 

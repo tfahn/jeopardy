@@ -40,7 +40,12 @@ socket.on('state', s => {
   if (s.chatRevealed && s.teamChatMessage) {
     chatRevealedMessage = s.teamChatMessage.message;
   }
-  render();
+  if (questionChanged) {
+    render();
+  } else {
+    // Light update: just refresh submitted status without full re-render
+    updateSubmitStatus();
+  }
 });
 
 socket.on('buzzer-locked', () => { buzzerLocked = true; updateBuzzerUI(); });
@@ -85,6 +90,28 @@ function showPlayerTimer(sec) {
   if (sec <= 5) el.classList.add('timer-urgent');
 }
 function removePlayerTimer() { document.getElementById('player-timer')?.remove(); }
+
+function updateSubmitStatus() {
+  if (!state) return;
+  // Update submit button and status text without full re-render
+  const submitted = state.teamAnswer?.submitted;
+  const submitBtn = document.querySelector('.submit-btn');
+  if (submitBtn && submitted) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Gesendet!';
+  }
+  const estimateInput = document.getElementById('estimate-input');
+  if (estimateInput && submitted) estimateInput.disabled = true;
+  const mapBtn = document.getElementById('map-submit-btn');
+  if (mapBtn && submitted) {
+    mapBtn.disabled = true;
+    mapBtn.textContent = 'Gesendet!';
+  }
+  // Update lobby team list if in lobby
+  if (state.phase === 'lobby' || joinedTeamId === null) {
+    render();
+  }
+}
 
 function render() {
   if (!state) return;

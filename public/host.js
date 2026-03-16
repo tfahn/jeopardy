@@ -65,13 +65,14 @@ function renderLobby() {
         <h2>Teams einrichten (je 2 Spieler)</h2>
         <div class="host-team-setup" id="team-setup">
           ${hasTeams ? state.teams.map((t, i) => `
-            <div class="host-team-row">
+            <div class="host-team-row" data-idx="${i}">
               <input type="text" value="${esc(t.name)}" id="tn-${i}">
               <input type="color" value="${t.color}" id="tc-${i}">
+              <button class="btn btn-red btn-sm" onclick="removeTeamRow(this)" style="padding:4px 8px;font-size:12px;">✕</button>
             </div>
           `).join('') : `
-            <div class="host-team-row"><input type="text" value="Team Rot" id="tn-0"><input type="color" value="#e74c3c" id="tc-0"></div>
-            <div class="host-team-row"><input type="text" value="Team Blau" id="tn-1"><input type="color" value="#3498db" id="tc-1"></div>
+            <div class="host-team-row" data-idx="0"><input type="text" value="Team Rot" id="tn-0"><input type="color" value="#e74c3c" id="tc-0"><button class="btn btn-red btn-sm" onclick="removeTeamRow(this)" style="padding:4px 8px;font-size:12px;">✕</button></div>
+            <div class="host-team-row" data-idx="1"><input type="text" value="Team Blau" id="tn-1"><input type="color" value="#3498db" id="tc-1"><button class="btn btn-red btn-sm" onclick="removeTeamRow(this)" style="padding:4px 8px;font-size:12px;">✕</button></div>
           `}
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;">
@@ -119,8 +120,20 @@ function addTeamRow() {
   const colors = ['#e67e22', '#9b59b6', '#1abc9c', '#e91e63', '#795548'];
   const div = document.createElement('div');
   div.className = 'host-team-row';
-  div.innerHTML = `<input type="text" value="Team ${i + 1}" id="tn-${i}"><input type="color" value="${colors[i % colors.length]}" id="tc-${i}">`;
+  div.innerHTML = `<input type="text" value="Team ${i + 1}" id="tn-${i}"><input type="color" value="${colors[i % colors.length]}" id="tc-${i}"><button class="btn btn-red btn-sm" onclick="removeTeamRow(this)" style="padding:4px 8px;font-size:12px;">✕</button>`;
   container.appendChild(div);
+}
+
+function removeTeamRow(btn) {
+  const row = btn.closest('.host-team-row');
+  row.remove();
+  // Re-index remaining rows
+  document.querySelectorAll('.host-team-row').forEach((r, i) => {
+    const nameInput = r.querySelector('input[type="text"]');
+    const colorInput = r.querySelector('input[type="color"]');
+    if (nameInput) nameInput.id = `tn-${i}`;
+    if (colorInput) colorInput.id = `tc-${i}`;
+  });
 }
 
 function saveTeams() {
@@ -167,6 +180,7 @@ function renderBoard() {
       <div class="host-panel full-width">
         <h2>Punktestand</h2>
         <div class="host-scores">${scoreRows()}</div>
+        <button class="btn btn-red" style="margin-top:15px;width:100%;" onclick="resetGame()">Spiel beenden</button>
       </div>
     </div>`;
 }
@@ -400,6 +414,7 @@ function renderLineupPanel() {
 function revealChat(teamId) { socket.emit('reveal-chat', teamId); }
 function revealTeamAnswer(teamId) { socket.emit('reveal-team-answer', teamId); }
 function showAnswer() { socket.emit('show-answer'); }
+function resetGame() { if (confirm('Spiel wirklich beenden? Scores werden zurückgesetzt.')) socket.emit('reset-game'); }
 function showMapResults() { socket.emit('show-map-results'); }
 function closeQuestion() { socket.emit('close-question'); }
 function startTimer(sec) { socket.emit('start-timer', sec); }
