@@ -1,0 +1,214 @@
+{
+  "categories": [
+    {
+      "name": "Wer bin ich?",
+      "questions": [
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich wuchs in einfachen Verhältnissen auf",
+            "Ich war ein begnadeter Redner",
+            "Ich setzte mich gegen Ungerechtigkeit ein",
+            "Ich wurde mit einem Friedensnobelpreis ausgezeichnet",
+            "Ich wurde im Gefängnis weltberühmt",
+            "Ich sass 27 Jahre im Gefängnis",
+            "Ich wurde der erste schwarze Präsident Südafrikas"
+          ],
+          "answer": "Nelson Mandela"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich wurde in Europa geboren",
+            "Ich habe nie geheiratet",
+            "Ich war besessen von Tauben",
+            "Ich sprach acht Sprachen fliessend",
+            "Ich war ein Rivale von Thomas Edison",
+            "Mein Name ist eine Einheit für Magnetismus",
+            "Ich erfand den Wechselstrom"
+          ],
+          "answer": "Nikola Tesla"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich bin in den USA aufgewachsen",
+            "Ich habe Milliarden verdient, bevor ich 30 war",
+            "Ich habe mein Studium abgebrochen",
+            "Ich trage fast immer einen Hoodie",
+            "Ich wurde verklagt von meinen Mitgründern",
+            "Über mich gibt es einen Oscar-nominierten Film",
+            "Ich habe Facebook gegründet"
+          ],
+          "answer": "Mark Zuckerberg"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich lebe in Europa",
+            "Ich bin eine der reichsten Frauen der Welt",
+            "Ich habe über 500 Millionen Bücher verkauft",
+            "Mein erstes Manuskript wurde 12 Mal abgelehnt",
+            "Ich habe 7 Bände einer Buchreihe geschrieben",
+            "Es geht um Zauberei",
+            "Mein berühmtester Charakter hat eine Blitznarbe"
+          ],
+          "answer": "J.K. Rowling"
+        },
+        {
+          "type": "lineup",
+          "content": { "type": "text", "text": "Wer bin ich?" },
+          "hints": [
+            "Ich wurde im 15. Jahrhundert geboren",
+            "Ich war Italiener, aber arbeitete für einen König",
+            "Ich suchte einen Seeweg nach Indien",
+            "Ich landete versehentlich auf einem anderen Kontinent",
+            "Ich dachte bis zu meinem Tod, ich sei in Asien",
+            "Ein ganzes Land in Südamerika trägt meinen Namen",
+            "Ich 'entdeckte' Amerika im Jahr 1492"
+          ],
+          "answer": "Christoph Kolumbus"
+        }
+      ]
+    },
+    {
+      "name": "Hör mal! 🔊",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was hörst du hier?", "media": "/media/sounds/sound-6.ogg" },
+          "answer": "Schreibmaschine"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was hörst du hier?", "media": "/media/sounds/sound-7.ogg" },
+          "answer": "Kirchenglocke"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was hörst du hier?", "media": "/media/sounds/sound-8.ogg" },
+          "answer": "Dampflok-Pfeife"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Was hörst du hier?", "media": "/media/sounds/sound-9.ogg" },
+          "answer": "Donner"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "audio", "text": "Welches Instrument hörst du?", "media": "/media/sounds/sound-10.ogg" },
+          "answer": "Akkordeon (Balg)"
+        }
+      ]
+    },
+    {
+      "name": "Geografie-Genie 🌍",
+      "questions": [
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welche zwei Länder werden durch den Ärmelkanal getrennt?" },
+          "answer": "England und Frankreich"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "In welchem Land befindet sich die Atacama-Wüste, eine der trockensten der Welt?" },
+          "answer": "Chile"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches Land hat mehr als 7.000 Inseln und liegt in Südostasien?" },
+          "answer": "Philippinen"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Wie heisst der längste Fluss Europas?" },
+          "answer": "Wolga (3.530 km)"
+        },
+        {
+          "type": "buzzer",
+          "content": { "type": "text", "text": "Welches Land hat Grenzen zu 14 anderen Ländern — die meisten der Welt (zusammen mit China)?" },
+          "answer": "Russland"
+        }
+      ]
+    },
+    {
+      "name": "Schätzen",
+      "questions": [
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Liter Blut pumpt das Herz eines Erwachsenen pro Tag?" },
+          "answer": "ca. 7.000 Liter",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Sprachen werden weltweit gesprochen?" },
+          "answer": "ca. 7.168",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie lange dauert es in Minuten, bis Sonnenlicht die Erde erreicht?" },
+          "answer": "ca. 8 Minuten und 20 Sekunden",
+          "answerPlayer": 0
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Knochen hat ein neugeborenes Baby?" },
+          "answer": "ca. 270 (Erwachsene haben nur 206)",
+          "answerPlayer": 1
+        },
+        {
+          "type": "estimate",
+          "content": { "type": "text", "text": "Wie viele Blitze schlagen weltweit pro Sekunde ein?" },
+          "answer": "ca. 100",
+          "answerPlayer": 0
+        }
+      ]
+    },
+    {
+      "name": "Kartenkunde 🗺️",
+      "questions": [
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt die Freiheitsstatue?" },
+          "answer": "New York, USA",
+          "target": { "lat": 40.6892, "lng": -74.0445 },
+          "answerPlayer": 0
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo fanden die ersten modernen Olympischen Spiele 1896 statt?" },
+          "answer": "Athen, Griechenland",
+          "target": { "lat": 37.9715, "lng": 23.7267 },
+          "answerPlayer": 1
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt der tiefste Punkt der Erde (Marianengraben)?" },
+          "answer": "Marianengraben, Pazifik",
+          "target": { "lat": 11.3493, "lng": 142.1996 },
+          "answerPlayer": 0
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo steht das Taj Mahal?" },
+          "answer": "Agra, Indien",
+          "target": { "lat": 27.1751, "lng": 78.0421 },
+          "answerPlayer": 1
+        },
+        {
+          "type": "map",
+          "content": { "type": "text", "text": "Wo liegt Tschernobyl?" },
+          "answer": "Prypjat, Ukraine",
+          "target": { "lat": 51.3894, "lng": 30.0988 },
+          "answerPlayer": 0
+        }
+      ]
+    }
+  ]
+}
