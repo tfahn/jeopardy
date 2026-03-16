@@ -133,9 +133,9 @@ function getTeamOfSocket(socketId) {
 }
 
 // Which player index answers for this question type?
-// estimate/map: answerPlayer field, default 0
-// chat: describerIndex field, default 0
-function getAnswerPlayerIndex(q) {
+// If team has only 1 member, always return 0
+function getAnswerPlayerIndex(q, team) {
+  if (team && team.members.length <= 1) return 0;
   if (q.type === 'chat') return q.describerIndex ?? 0;
   return q.answerPlayer ?? 0;
 }
@@ -165,7 +165,7 @@ function clientState(role, socketId) {
       const memberIdx = getMemberIndex(socketId);
       const team = getTeamOfSocket(socketId);
       const teamId = team?.id;
-      const answerIdx = getAnswerPlayerIndex(q);
+      const answerIdx = getAnswerPlayerIndex(q, team);
 
       // Is this player the one who answers?
       s.isAnswerer = (memberIdx === answerIdx);
@@ -363,7 +363,8 @@ io.on('connection', socket => {
     if (teamId === undefined) return;
     if (game.teamAnswers[teamId]?.submitted) return;
     // Only the designated answerer can submit
-    const answerIdx = getAnswerPlayerIndex(game.currentQuestion);
+    const team = getTeamOfSocket(socket.id);
+    const answerIdx = getAnswerPlayerIndex(game.currentQuestion, team);
     if (getMemberIndex(socket.id) !== answerIdx) return;
     game.teamAnswers[teamId] = { value, submitted: true };
     broadcast();
@@ -376,7 +377,8 @@ io.on('connection', socket => {
     const teamId = socket.data.teamId;
     if (teamId === undefined) return;
     if (game.teamChat[teamId]?.sent) return;
-    const answerIdx = getAnswerPlayerIndex(game.currentQuestion);
+    const team = getTeamOfSocket(socket.id);
+    const answerIdx = getAnswerPlayerIndex(game.currentQuestion, team);
     if (getMemberIndex(socket.id) !== answerIdx) return;
     game.teamChat[teamId] = { message, sent: true, playerName: socket.data.playerName };
     broadcast();
