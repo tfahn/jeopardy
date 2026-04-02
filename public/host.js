@@ -6,7 +6,29 @@ let allTeamMessages = {};
 let hostChatOpen = false;
 
 socket.on('connect', () => socket.emit('register', 'host'));
-socket.on('state', s => { state = s; render(); });
+socket.on('state', s => {
+  const prevPhase = state?.phase;
+  const prevQuestion = state?.currentQuestion;
+  const phaseChanged = !state || prevPhase !== s.phase ||
+    prevQuestion?.row !== s.currentQuestion?.row ||
+    prevQuestion?.col !== s.currentQuestion?.col;
+  state = s;
+  if (phaseChanged) {
+    render();
+  } else if (s.phase === 'question') {
+    // Update question panel without full page re-render
+    renderQuestionControl();
+  } else if (s.phase === 'board') {
+    // Just update scores in board view
+    document.querySelectorAll('.team-pts').forEach((el, i) => {
+      if (state.teams[i]) el.textContent = state.teams[i].score;
+    });
+  }
+  // Lobby always fully re-renders (shows player list changes)
+  else if (s.phase === 'lobby') {
+    render();
+  }
+});
 
 socket.on('all-team-msgs', msgs => { allTeamMessages = msgs; renderHostChat(); });
 socket.on('team-msg-new', entry => {
@@ -52,7 +74,44 @@ function render() {
   if (!state) return;
   if (state.phase === 'lobby') renderLobby();
   else if (state.phase === 'board') renderBoard();
+  else if (state.phase === 'dailyDouble') renderDailyDoubleHost();
   else if (state.phase === 'question') renderQuestionControl();
+  else if (state.phase === 'endscreen') renderEndscreenHost();
+}
+
+function renderEndscreenHost() {
+  const sorted = [...state.teams].sort((a, b) => b.score - a.score);
+  app.innerHTML = `
+    <div class="host-header"><h1>JEOPARDY — Host</h1><span class="phase-badge" style="background:var(--gold);color:var(--bg);">SIEGEREHRUNG</span></div>
+    <div class="host-grid">
+      <div class="host-panel full-width">
+        <h2 style="color:var(--gold);">Endergebnis</h2>
+        ${sorted.map((t, i) => `
+          <div style="display:flex;justify-content:space-between;padding:10px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);">
+            <span style="color:${t.color};font-weight:800;">${i+1}. ${esc(t.name)}</span>
+            <span style="color:var(--gold);font-weight:900;">${t.score}P</span>
+          </div>
+        `).join('')}
+        <button class="btn btn-red" style="margin-top:20px;width:100%;" onclick="resetGame()">Zurück zur Lobby</button>
+      </div>
+    </div>`;
+}
+
+function renderDailyDoubleHost() {
+  if (!state.currentQuestion) return;
+  const team = state.teams[state.dailyDoubleTeam];
+  const q = state.currentQuestion;
+  app.innerHTML = `
+    <div class="host-header"><h1>JEOPARDY — Host</h1><span class="phase-badge" style="background:var(--gold);color:var(--bg);">DAILY DOUBLE</span></div>
+    <div class="host-grid">
+      <div class="host-panel">
+        <h2 style="color:var(--gold);">Daily Double!</h2>
+        <p>Kategorie: <b>${esc(q.category)}</b> — ${q.points}P</p>
+        <p>Team: <b style="color:${team?.color || '#fff'};">${esc(team?.name)}</b> (Score: ${team?.score || 0})</p>
+        <p style="margin-top:10px;color:var(--gray);">Warte auf Einsatz vom Team...</p>
+        <div class="host-answer" style="margin-top:15px;"><b>Antwort:</b> ${esc(q.answer)}</div>
+      </div>
+    </div>`;
 }
 
 // ==================== LOBBY ====================
@@ -180,7 +239,10 @@ function renderBoard() {
       <div class="host-panel full-width">
         <h2>Punktestand</h2>
         <div class="host-scores">${scoreRows()}</div>
-        <button class="btn btn-red" style="margin-top:15px;width:100%;" onclick="resetGame()">Spiel beenden</button>
+        <div style="display:flex;gap:8px;margin-top:15px;">
+          <button class="btn btn-gold" style="flex:1;" onclick="endGame()">Siegerehrung</button>
+          <button class="btn btn-red" style="flex:1;" onclick="resetGame()">Zurück zur Lobby</button>
+        </div>
       </div>
     </div>`;
 }
@@ -230,6 +292,15 @@ function renderQuestionControl() {
         <div class="host-answer"><b>Antwort:</b> ${esc(q.answer)}</div>
         ${q.secret ? `<p style="margin-top:6px;color:var(--gray);">Geheim: <b style="color:var(--gold);">${esc(q.secret)}</b></p>` : ''}
         ${q.target ? `<p style="margin-top:6px;color:var(--gray);">Ziel: ${q.target.lat.toFixed(2)}, ${q.target.lng.toFixed(2)}</p>` : ''}
+        ${state.activeJokers?.double !== null ? `<p style="margin-top:6px;color:var(--gold);font-weight:800;">DOPPEL-JOKER AKTIV! (${state.teams.find(t=>t.id===state.activeJokers.double)?.name})</p>` : ''}
+        ${state.activeJokers?.blocked !== null ? `<p style="margin-top:6px;color:var(--red);font-weight:800;">${state.teams.find(t=>t.id===state.activeJokers.blocked)?.name} GEBLOCKT!</p>` : ''}
+        ${state.dailyDoubleWager ? `<p style="margin-top:6px;color:var(--gold);font-weight:800;">DAILY DOUBLE — Einsatz: ${state.dailyDoubleWager}</p>` : ''}
+        <div style="margin-top:8px;font-size:12px;color:var(--gray);">
+          Joker: ${state.teams.map(t => {
+            const j = state.jokers?.[t.id];
+            return `<span style="color:${t.color};">${t.name}</span>: ${j?.double ? '×2' : '—'} ${j?.block ? '🚫' : '—'}`;
+          }).join(' | ')}
+        </div>
       </div>
       <div class="host-panel">
         <h2>Aktionen</h2>
@@ -247,7 +318,12 @@ function renderQuestionControl() {
           </div>
           <button class="btn btn-gold" onclick="showAnswer()">Antwort zeigen (Board)</button>
           ${q.type === 'map' ? '<button class="btn btn-blue" onclick="showMapResults()">Karten-Ergebnisse zeigen</button>' : ''}
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="font-size:12px;color:var(--gray);">Vol:</label>
+            <input type="range" min="0" max="1" step="0.1" value="1" onchange="socket.emit('set-volume',Number(this.value))" style="flex:1;">
+          </div>
           <button class="btn btn-red" onclick="closeQuestion()">Frage schliessen</button>
+          <div style="font-size:11px;color:var(--gray);margin-top:4px;">Shortcuts: Leertaste=Buzzer frei, Enter=Antwort, Esc=Schließen</div>
         </div>
       </div>
       <div class="host-panel">
@@ -414,7 +490,8 @@ function renderLineupPanel() {
 function revealChat(teamId) { socket.emit('reveal-chat', teamId); }
 function revealTeamAnswer(teamId) { socket.emit('reveal-team-answer', teamId); }
 function showAnswer() { socket.emit('show-answer'); }
-function resetGame() { if (confirm('Spiel wirklich beenden? Scores werden zurückgesetzt.')) socket.emit('reset-game'); }
+function endGame() { if (confirm('Spiel beenden und Siegerehrung zeigen?')) socket.emit('end-game'); }
+function resetGame() { if (confirm('Zurück zur Lobby? Scores werden zurückgesetzt.')) socket.emit('reset-game'); }
 function showMapResults() { socket.emit('show-map-results'); }
 function closeQuestion() { socket.emit('close-question'); }
 function startTimer(sec) { socket.emit('start-timer', sec); }
@@ -488,6 +565,15 @@ function toggleHostChat() {
   hostChatOpen = !hostChatOpen;
   renderHostChat();
 }
+
+// ==================== Keyboard Shortcuts ====================
+document.addEventListener('keydown', e => {
+  if (!state || state.phase !== 'question') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space') { e.preventDefault(); buzzerUnlock(); }
+  else if (e.code === 'Enter') { e.preventDefault(); showAnswer(); }
+  else if (e.code === 'Escape') { e.preventDefault(); closeQuestion(); }
+});
 
 function esc(text) {
   if (!text) return '';

@@ -177,6 +177,8 @@ async function renderAll() {
         </select>
         <button class="btn btn-green btn-sm" onclick="newBoard()">+ Neu</button>
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:var(--gray);" onclick="duplicateBoard()">Kopie</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:var(--gray);" onclick="exportBoard()">Export</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:var(--gray);" onclick="importBoard()">Import</button>
         ${currentFile ? `<button class="btn btn-red btn-sm" onclick="deleteBoard()">Löschen</button>` : ''}
         <input type="text" id="file-name" value="${(currentFile || 'board-neu.json').replace('.json', '')}"
           style="width:140px;" onchange="currentFile=this.value.replace(/\\.json$/,'')+'.json'" placeholder="Dateiname">
@@ -459,6 +461,54 @@ function addHint(qi) {
 function removeHint(qi, hi) {
   getQ(qi).hints.splice(hi, 1);
   renderAll();
+}
+
+// ==================== Export / Import ====================
+function exportBoard() {
+  const json = JSON.stringify(board, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (currentFile || 'board-export.json');
+  a.click();
+  URL.revokeObjectURL(url);
+  status('Board exportiert');
+}
+
+function importBoard() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.categories || !Array.isArray(data.categories)) {
+          status('Ungültiges Board-Format!', true);
+          return;
+        }
+        board = data;
+        // Migrate content to array format
+        for (const cat of board.categories) {
+          for (const q of cat.questions) {
+            if (!Array.isArray(q.content)) q.content = [q.content || { type: 'text', text: '' }];
+          }
+        }
+        currentFile = file.name.endsWith('.json') ? file.name : file.name + '.json';
+        activeCategory = 0;
+        renderAll();
+        status(`"${file.name}" importiert — noch nicht gespeichert!`);
+      } catch (err) {
+        status('Fehler beim Lesen der Datei!', true);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 // Keyboard shortcut

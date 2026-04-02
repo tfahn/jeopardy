@@ -65,13 +65,29 @@ const game = {
   revealedAnswers: [],  // teamIds whose answers are shown on board
   lineupRevealed: 0,   // how many lineup hints are shown
   teamMessages: {},    // persistent team chat: { [teamId]: [{playerName, message, timestamp}] }
+  // Jokers: each team gets 2 (double, block)
+  jokers: {},          // { [teamId]: { double: bool, block: bool } }
+  activeJokers: { double: null, blocked: null }, // { double: teamId|null, blocked: teamId|null }
+  // Daily Double
+  dailyDouble: null,   // { row, col }
+  dailyDoubleWager: null,
+  dailyDoubleTeam: null,
+  // History
+  answerHistory: [],   // [{ category, points, type, answer, correct: teamId|null }]
+  // Volume
+  volume: 1.0,
 };
 
 function loadQuestions(filename) {
   const file = filename || 'board-1.json';
-  // Sanitize: only allow alphanumeric, dash, underscore, dot
   const safe = file.replace(/[^a-zA-Z0-9._-]/g, '');
-  return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', safe), 'utf8'));
+  const filepath = path.join(__dirname, 'data', safe);
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf8'));
+  } catch (e) {
+    console.error(`Failed to load ${safe}:`, e.message);
+    return { categories: [] };
+  }
 }
 
 function listQuestionFiles() {
@@ -151,6 +167,10 @@ function clientState(role, socketId) {
     currentTeamIndex: game.currentTeamIndex,
     board: game.board,
     categories: game.categories.map(c => c.name),
+    jokers: game.jokers,
+    activeJokers: game.activeJokers,
+    dailyDoubleWager: game.dailyDoubleWager,
+    dailyDoubleTeam: game.dailyDoubleTeam,
   };
 
   if (game.currentQuestion) {
@@ -201,6 +221,11 @@ function clientState(role, socketId) {
       s.currentQuestion.hints = (q.hints || []).slice(0, game.lineupRevealed);
     }
 
+    // Board also needs buzzes for display
+    if (role === 'board') {
+      s.buzzes = game.buzzes;
+    }
+
     if (role === 'host') {
       s.currentQuestion.answer = q.answer;
       s.currentQuestion.target = q.target;
@@ -212,6 +237,7 @@ function clientState(role, socketId) {
       s.teamChat = game.teamChat;
       s.chatRevealed = game.chatRevealed;
       s.revealedAnswers = game.revealedAnswers;
+      s.answerHistory = game.answerHistory;
     }
   }
   return s;
@@ -224,6 +250,8 @@ function broadcast() {
     }
   });
 }
+
+const disconnectTimers = {}; // { "teamId-playerName": { timeoutId, oldSocketId } }
 
 // --------------- Socket.IO ---------------
 io.on('connection', socket => {
@@ -261,6 +289,37 @@ io.on('connection', socket => {
   });
 
   socket.on('join-team', ({ teamId, playerName }) => {
+    // Cancel any disconnect timers for this player and update socket ID
+    let reconnected = false;
+    for (const [key, timer] of Object.entries(disconnectTimers)) {
+      if (key.endsWith(`-${playerName}`)) {
+        clearTimeout(timer.timeoutId);
+        const oldSid = timer.oldSocketId;
+        const sameTeam = key === `${teamId}-${playerName}`;
+        if (sameTeam) {
+          // Reconnect to same team: update socket ID in place
+          game.teams.forEach(t => {
+            t.members.forEach(m => { if (m.socketId === oldSid) m.socketId = socket.id; });
+          });
+          reconnected = true;
+        } else {
+          // Switching teams: remove from old team
+          game.teams.forEach(t => {
+            t.members = t.members.filter(m => m.socketId !== oldSid);
+          });
+        }
+        delete disconnectTimers[key];
+      }
+    }
+    if (reconnected) {
+      socket.data.teamId = teamId;
+      socket.data.playerName = playerName;
+      socket.emit('team-msg-history', game.teamMessages[teamId] || []);
+      broadcast();
+      return;
+    }
+
+    // Normal join: remove from any current team first
     game.teams.forEach(t => {
       t.members = t.members.filter(m => m.socketId !== socket.id);
     });
@@ -304,6 +363,15 @@ io.on('connection', socket => {
         game.board[r][c] = { points: pts[r], used: false };
       }
     }
+    // Daily Double: random cell
+    const ddRow = Math.floor(Math.random() * 5);
+    const ddCol = Math.floor(Math.random() * 5);
+    game.dailyDouble = { row: ddRow, col: ddCol };
+    game.board[ddRow][ddCol].dailyDouble = true;
+    // Jokers: each team gets double + block
+    game.jokers = {};
+    game.teams.forEach(t => { game.jokers[t.id] = { double: true, block: true }; });
+    game.answerHistory = [];
     game.phase = 'board';
     game.currentTeamIndex = 0;
     broadcast();
@@ -311,16 +379,16 @@ io.on('connection', socket => {
 
   socket.on('select-question', ({ row, col }) => {
     if (game.phase !== 'board') return;
+    if (!game.board[row] || !game.board[row][col]) return;
     const cell = game.board[row][col];
     if (cell.used) return;
+    if (!game.categories[col] || !game.categories[col].questions[row]) return;
     const q = game.categories[col].questions[row];
     game.currentQuestion = {
       ...q, row, col,
       points: cell.points,
       category: game.categories[col].name,
     };
-    game.phase = 'question';
-    io.emit('sfx', 'select');
     game.buzzes = [];
     game.buzzerLocked = false;
     game.buzzerOut = [];
@@ -329,7 +397,55 @@ io.on('connection', socket => {
     game.chatRevealed = [];
     game.revealedAnswers = [];
     game.lineupRevealed = 0;
+    game.activeJokers = { double: null, blocked: null };
+    game.dailyDoubleWager = null;
+    game.dailyDoubleTeam = null;
+
+    // Check Daily Double
+    if (cell.dailyDouble) {
+      game.phase = 'dailyDouble';
+      game.dailyDoubleTeam = game.currentTeamIndex;
+      io.emit('sfx', 'dailyDouble');
+    } else {
+      game.phase = 'question';
+      io.emit('sfx', 'select');
+    }
     broadcast();
+  });
+
+  // ---- Jokers ----
+  socket.on('use-joker', ({ type, targetTeamId }) => {
+    const teamId = socket.data.teamId;
+    if (teamId === undefined) return;
+    if (!game.jokers[teamId]) return;
+    if (type === 'double' && game.jokers[teamId].double) {
+      game.jokers[teamId].double = false;
+      game.activeJokers.double = teamId;
+      io.emit('sfx', 'joker');
+      broadcast();
+    } else if (type === 'block' && game.jokers[teamId].block && targetTeamId !== undefined) {
+      game.jokers[teamId].block = false;
+      game.activeJokers.blocked = targetTeamId;
+      io.emit('sfx', 'joker');
+      broadcast();
+    }
+  });
+
+  // ---- Daily Double Wager ----
+  socket.on('daily-double-wager', wager => {
+    if (game.phase !== 'dailyDouble') return;
+    const teamId = socket.data.teamId;
+    const team = game.teams[game.dailyDoubleTeam];
+    if (!team || team.id !== teamId) return;
+    game.dailyDoubleWager = Math.max(0, Math.min(Number(wager) || 0, Math.max(team.score, game.currentQuestion?.points || 600)));
+    game.phase = 'question';
+    broadcast();
+  });
+
+  // ---- Volume ----
+  socket.on('set-volume', vol => {
+    game.volume = Math.max(0, Math.min(1, Number(vol) || 1));
+    io.emit('set-volume', game.volume);
   });
 
   // ---- Lineup: reveal next hint ----
@@ -349,6 +465,8 @@ io.on('connection', socket => {
     if (t !== 'buzzer' && t !== 'lineup') return;
     if (game.buzzerLocked) return;
     if (game.buzzerOut.includes(socket.id)) return;
+    // Blocked by joker?
+    if (game.activeJokers.blocked === socket.data.teamId) return;
     game.buzzes.push({
       socketId: socket.id,
       teamId: socket.data.teamId,
@@ -363,6 +481,7 @@ io.on('connection', socket => {
   });
 
   socket.on('buzzer-unlock', () => {
+    if (socket.data.role !== 'host') return;
     const bt = game.currentQuestion?.type;
     if (bt !== 'buzzer' && bt !== 'lineup') return;
     const lastBuzz = game.buzzes[game.buzzes.length - 1];
@@ -421,6 +540,13 @@ io.on('connection', socket => {
     });
   });
 
+  // ---- Emoji Reactions ----
+  socket.on('emoji-react', emoji => {
+    if (!emoji || typeof emoji !== 'string') return;
+    const safe = emoji.slice(0, 4); // max 4 chars (1-2 emojis)
+    io.emit('emoji-react', { emoji: safe, teamColor: getTeamOfSocket(socket.id)?.color || '#fff' });
+  });
+
   // ---- Media control (host controls board playback) ----
   socket.on('media-control', action => {
     io.emit('media-control', action); // 'play' | 'pause'
@@ -436,15 +562,28 @@ io.on('connection', socket => {
 
   // ---- Host Controls ----
   socket.on('award-points', ({ teamId, points }) => {
+    if (socket.data.role !== 'host') return;
     const team = game.teams.find(t => t.id === teamId);
     if (team) {
-      team.score += points;
+      let multiplier = 1;
+      if (game.activeJokers.double !== null) multiplier = 2;
+      if (game.dailyDoubleWager && team.id === game.teams[game.dailyDoubleTeam]?.id) {
+        // Daily Double: use wager instead of question points (with multiplier)
+        const wagerPts = points > 0 ? game.dailyDoubleWager * multiplier : -game.dailyDoubleWager * multiplier;
+        team.score += wagerPts;
+        io.emit('score-change', { teamId, delta: wagerPts, teamColor: team.color, teamName: team.name });
+      } else {
+        const finalPts = points * multiplier;
+        team.score += finalPts;
+        io.emit('score-change', { teamId, delta: finalPts, teamColor: team.color, teamName: team.name });
+      }
       io.emit('sfx', points > 0 ? 'correct' : 'wrong');
       broadcast();
     }
   });
 
   socket.on('show-answer', () => {
+    if (socket.data.role !== 'host') return;
     if (!game.currentQuestion) return;
     io.emit('show-answer', {
       answer: game.currentQuestion.answer,
@@ -465,8 +604,17 @@ io.on('connection', socket => {
   });
 
   socket.on('close-question', () => {
+    if (socket.data.role !== 'host') return;
     if (game.currentQuestion) {
       game.board[game.currentQuestion.row][game.currentQuestion.col].used = true;
+      game.answerHistory.push({
+        category: game.currentQuestion.category,
+        points: game.currentQuestion.points,
+        type: game.currentQuestion.type,
+        answer: game.currentQuestion.answer,
+        activeJokers: { ...game.activeJokers },
+        dailyDouble: !!game.dailyDoubleWager,
+      });
     }
     game.currentQuestion = null;
     game.phase = 'board';
@@ -478,6 +626,9 @@ io.on('connection', socket => {
     game.chatRevealed = [];
     game.revealedAnswers = [];
     game.lineupRevealed = 0;
+    game.activeJokers = { double: null, blocked: null };
+    game.dailyDoubleWager = null;
+    game.dailyDoubleTeam = null;
     game.currentTeamIndex = (game.currentTeamIndex + 1) % Math.max(game.teams.length, 1);
     broadcast();
   });
@@ -487,7 +638,14 @@ io.on('connection', socket => {
     broadcast();
   });
 
+  socket.on('end-game', () => {
+    if (socket.data.role !== 'host') return;
+    game.phase = 'endscreen';
+    broadcast();
+  });
+
   socket.on('reset-game', () => {
+    if (socket.data.role !== 'host') return;
     game.phase = 'lobby';
     game.categories = [];
     game.board = [];
@@ -501,15 +659,31 @@ io.on('connection', socket => {
     game.chatRevealed = [];
     game.revealedAnswers = [];
     game.lineupRevealed = 0;
+    game.jokers = {};
+    game.activeJokers = { double: null, blocked: null };
+    game.dailyDouble = null;
+    game.dailyDoubleWager = null;
+    game.dailyDoubleTeam = null;
+    game.answerHistory = [];
     game.teams.forEach(t => { t.score = 0; });
     broadcast();
   });
 
   socket.on('disconnect', () => {
-    game.teams.forEach(t => {
-      t.members = t.members.filter(m => m.socketId !== socket.id);
-    });
-    broadcast();
+    // Grace period: don't remove player immediately (allows page refresh)
+    const teamId = socket.data.teamId;
+    const pName = socket.data.playerName;
+    if (teamId === undefined || !pName) return;
+
+    const timeoutId = setTimeout(() => {
+      game.teams.forEach(t => {
+        t.members = t.members.filter(m => m.socketId !== socket.id);
+      });
+      delete disconnectTimers[`${teamId}-${pName}`];
+      broadcast();
+    }, 15000); // 15 second grace period
+
+    disconnectTimers[`${teamId}-${pName}`] = { timeoutId, oldSocketId: socket.id };
   });
 });
 

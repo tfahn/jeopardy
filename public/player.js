@@ -2,7 +2,7 @@ const socket = io({ query: { role: 'player' } });
 const app = document.getElementById('app');
 let state = null;
 let playerName = localStorage.getItem('jeopardy-name') || '';
-let joinedTeamId = null;
+let joinedTeamId = localStorage.getItem('jeopardy-teamId') !== null ? Number(localStorage.getItem('jeopardy-teamId')) : null;
 let hasBuzzed = false;
 let buzzerLocked = false;
 let isEliminated = false;
@@ -15,7 +15,13 @@ let teamMessages = [];
 let chatOpen = false;
 let unreadCount = 0;
 
-socket.on('connect', () => socket.emit('register', 'player'));
+socket.on('connect', () => {
+  socket.emit('register', 'player');
+  // Auto-rejoin team after page refresh
+  if (joinedTeamId !== null && playerName) {
+    socket.emit('join-team', { teamId: joinedTeamId, playerName });
+  }
+});
 
 socket.on('team-msg-history', msgs => { teamMessages = msgs; renderTeamChat(); });
 socket.on('team-msg-new', entry => {
@@ -35,6 +41,14 @@ socket.on('state', s => {
     isEliminated = false;
     chatSent = false;
     chatRevealedMessage = null;
+  }
+  // If server reset to lobby and we were in a team, check if team still exists
+  if (s.phase === 'lobby' && joinedTeamId !== null) {
+    const myTeam = s.teams.find(t => t.id === joinedTeamId);
+    if (!myTeam) {
+      joinedTeamId = null;
+      localStorage.removeItem('jeopardy-teamId');
+    }
   }
   buzzerLocked = s.buzzerLocked || false;
   if (s.chatRevealed && s.teamChatMessage) {
@@ -93,7 +107,24 @@ function removePlayerTimer() { document.getElementById('player-timer')?.remove()
 
 function updateSubmitStatus() {
   if (!state) return;
-  // Update submit button and status text without full re-render
+
+  // Lobby/waiting: full re-render is safe (no interactive inputs to lose)
+  if (state.phase === 'lobby' || joinedTeamId === null) { render(); return; }
+  if (state.phase === 'board') { render(); return; }
+
+  // Joker/block status may have changed — update buzzer state
+  const isBlocked = state.activeJokers?.blocked === joinedTeamId;
+  const buzzBtn = document.querySelector('.buzz-btn');
+  if (buzzBtn && isBlocked) {
+    buzzBtn.disabled = true;
+    buzzBtn.textContent = 'GEBLOCKT';
+    buzzBtn.classList.add('buzzed');
+  }
+  // Update joker buttons visibility
+  const jokerRow = document.querySelector('.joker-row');
+  if (jokerRow) jokerRow.innerHTML = renderJokerButtons().replace(/<\/?div[^>]*class="joker-row"[^>]*>/g, '');
+
+  // Question phase: only update submission state, preserve inputs/map
   const submitted = state.teamAnswer?.submitted;
   const submitBtn = document.querySelector('.submit-btn');
   if (submitBtn && submitted) {
@@ -107,10 +138,6 @@ function updateSubmitStatus() {
     mapBtn.disabled = true;
     mapBtn.textContent = 'Gesendet!';
   }
-  // Update lobby team list if in lobby
-  if (state.phase === 'lobby' || joinedTeamId === null) {
-    render();
-  }
 }
 
 function render() {
@@ -120,7 +147,9 @@ function render() {
   if (nameInput) playerName = nameInput.value;
   if (state.phase === 'lobby' || joinedTeamId === null) renderLobby();
   else if (state.phase === 'board') renderWaiting();
+  else if (state.phase === 'dailyDouble') renderDailyDouble();
   else if (state.phase === 'question') renderQuestion();
+  else if (state.phase === 'endscreen') renderPlayerEndscreen();
 }
 
 // ==================== Lobby ====================
@@ -157,6 +186,7 @@ function joinTeam(teamId) {
   playerName = nameInput ? nameInput.value.trim() : playerName;
   if (!playerName) { alert('Bitte gib einen Namen ein!'); return; }
   localStorage.setItem('jeopardy-name', playerName);
+  localStorage.setItem('jeopardy-teamId', teamId);
   joinedTeamId = teamId;
   socket.emit('join-team', { teamId, playerName });
 }
@@ -180,6 +210,7 @@ function renderWaiting() {
           </div>
         `).join('')}
       </div>
+      ${renderEmojiBar()}
     </div>`;
 }
 
@@ -194,8 +225,9 @@ function renderQuestion() {
   let interactionHtml = '';
 
   if (q.type === 'buzzer' || q.type === 'lineup') {
-    const disabled = isEliminated || buzzerLocked;
-    const label = isEliminated ? 'GESPERRT' : (buzzerLocked ? 'GESPERRT' : 'BUZZ!');
+    const isBlocked = state.activeJokers?.blocked === joinedTeamId;
+    const disabled = isEliminated || buzzerLocked || isBlocked;
+    const label = isBlocked ? 'GEBLOCKT' : (isEliminated ? 'GESPERRT' : (buzzerLocked ? 'GESPERRT' : 'BUZZ!'));
     interactionHtml = `
       <div class="buzzer-section">
         <button class="buzz-btn ${disabled ? 'buzzed' : ''}" onclick="buzz()" ${disabled ? 'disabled' : ''}>${label}</button>
@@ -230,13 +262,23 @@ function renderQuestion() {
     interactionHtml = renderChatUI();
   }
 
+  // Blocked banner
+  let blockedBanner = '';
+  if (state.activeJokers?.blocked === joinedTeamId) {
+    blockedBanner = '<div style="background:var(--red);color:white;text-align:center;padding:10px;border-radius:8px;margin-bottom:10px;font-weight:800;">Ihr seid gesperrt diese Runde!</div>';
+  }
+  let jokerHtml = renderJokerButtons();
+
   app.innerHTML = `
     <div class="question-info-player">
       <div class="cat">${esc(q.category)} — ${typeName}</div>
-      <div class="pts">${q.points}</div>
+      <div class="pts">${q.points}${state.activeJokers?.double !== null ? ' ×2' : ''}${state.dailyDoubleWager ? ' DD' : ''}</div>
       ${contentHtml ? `<div class="text">${contentHtml}</div>` : ''}
     </div>
-    ${interactionHtml}`;
+    ${blockedBanner}
+    ${jokerHtml}
+    ${interactionHtml}
+    ${renderEmojiBar()}`;
 
   if (q.type === 'map' && state.isAnswerer && !submitted) {
     setTimeout(() => initPlayerMap(), 100);
@@ -281,7 +323,7 @@ function renderChatUI() {
         <div class="chat-secret">
           <div style="font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--gray);margin-bottom:4px;">Du beschreibst:</div>
           <div style="font-size:24px;font-weight:800;color:var(--gold);">${esc(q.secret || q.answer || '???')}</div>
-          ${q.content.text ? `<div style="margin-top:8px;color:var(--gray);font-size:14px;">${q.content.text}</div>` : ''}
+          ${(Array.isArray(q.content) ? q.content[0]?.text : q.content?.text) ? `<div style="margin-top:8px;color:var(--gray);font-size:14px;">${esc((Array.isArray(q.content) ? q.content[0]?.text : q.content?.text))}</div>` : ''}
         </div>
         <textarea id="chat-input" placeholder="Deine Nachricht eingeben..."
                   style="width:100%;min-height:100px;padding:12px;border-radius:12px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:white;font-size:20px;resize:vertical;outline:none;margin-top:10px;"></textarea>
@@ -291,7 +333,7 @@ function renderChatUI() {
     if (chatRevealedMessage) {
       return `
         <div class="chat-section">
-          ${q.content.text ? `<p style="text-align:center;color:var(--gray);margin-bottom:10px;">${q.content.text}</p>` : ''}
+          ${(Array.isArray(q.content) ? q.content[0]?.text : q.content?.text) ? `<p style="text-align:center;color:var(--gray);margin-bottom:10px;">${(Array.isArray(q.content) ? q.content[0]?.text : q.content?.text)}</p>` : ''}
           <div class="chat-messages" style="align-items:center;justify-content:center;">
             <div class="chat-bubble other" style="font-size:28px;">${esc(chatRevealedMessage)}</div>
           </div>
@@ -306,11 +348,117 @@ function renderChatUI() {
   }
 }
 
+// ==================== Endscreen ====================
+function renderPlayerEndscreen() {
+  const sorted = [...state.teams].sort((a, b) => b.score - a.score);
+  const myTeam = sorted.find(t => t.id === joinedTeamId);
+  const myRank = sorted.indexOf(myTeam) + 1;
+  const isWinner = myRank === 1;
+  app.innerHTML = `
+    <div style="text-align:center;padding:30px;">
+      <div style="font-size:48px;margin-bottom:10px;">${isWinner ? '🏆' : '🎮'}</div>
+      <h2 style="color:var(--gold);margin-bottom:20px;">${isWinner ? 'IHR HABT GEWONNEN!' : 'GAME OVER!'}</h2>
+      ${sorted.map((t, i) => `
+        <div style="display:flex;justify-content:space-between;padding:10px 16px;margin:4px 0;border-radius:8px;background:${t.id===joinedTeamId?'rgba(255,204,0,0.15)':'rgba(255,255,255,0.05)'};">
+          <span style="color:${t.color};font-weight:800;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1+'.'} ${t.name}</span>
+          <span style="font-weight:900;color:var(--gold);">${t.score}</span>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+// ==================== Daily Double ====================
+function renderDailyDouble() {
+  const ddTeam = state.teams[state.dailyDoubleTeam];
+  const isMyTeam = ddTeam && ddTeam.id === joinedTeamId;
+  if (!isMyTeam) {
+    app.innerHTML = `
+      <div style="text-align:center;padding:40px;">
+        <div style="font-size:48px;margin-bottom:20px;">&#9733;</div>
+        <h2 style="color:var(--gold);">DAILY DOUBLE!</h2>
+        <p style="color:var(--gray);margin-top:10px;"><b style="color:${ddTeam?.color || '#fff'};">${ddTeam?.name || '?'}</b> setzt Punkte...</p>
+      </div>`;
+    return;
+  }
+  const maxWager = Math.max(ddTeam.score, state.currentQuestion?.points || 600);
+  app.innerHTML = `
+    <div style="text-align:center;padding:30px;">
+      <div style="font-size:48px;margin-bottom:10px;">&#9733;</div>
+      <h2 style="color:var(--gold);margin-bottom:5px;">DAILY DOUBLE!</h2>
+      <p style="color:var(--gray);margin-bottom:20px;">${state.currentQuestion?.category} — Euer Score: ${ddTeam.score}</p>
+      <input type="number" id="wager-input" min="0" max="${maxWager}" value="${state.currentQuestion?.points || 400}"
+        style="font-size:28px;text-align:center;width:180px;padding:12px;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,0.05);color:var(--gold);font-weight:800;">
+      <p style="color:var(--gray);font-size:13px;margin:8px 0;">Max: ${maxWager}</p>
+      <button class="submit-btn" onclick="submitWager()" style="width:100%;margin-top:10px;">Einsatz bestätigen</button>
+    </div>`;
+}
+
+function submitWager() {
+  const input = document.getElementById('wager-input');
+  if (!input) return;
+  socket.emit('daily-double-wager', Number(input.value) || 0);
+}
+
+// ==================== Joker Buttons ====================
+function renderJokerButtons() {
+  if (joinedTeamId === null || !state.jokers) return '';
+  const myJokers = state.jokers[joinedTeamId];
+  if (!myJokers || (!myJokers.double && !myJokers.block)) return '';
+
+  let html = '<div class="joker-row">';
+  if (myJokers.double && state.activeJokers?.double === null) {
+    html += `<button class="joker-btn joker-double" onclick="useJoker('double')">&#215;2 DOPPEL</button>`;
+  }
+  if (myJokers.block && state.activeJokers?.blocked === null) {
+    html += `<button class="joker-btn joker-block" onclick="showBlockPicker()">&#128683; BLOCKER</button>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function useJoker(type, targetTeamId) {
+  socket.emit('use-joker', { type, targetTeamId });
+}
+
+function showBlockPicker() {
+  const others = state.teams.filter(t => t.id !== joinedTeamId);
+  const html = others.map(t =>
+    `<button class="joker-btn" style="background:${t.color};" onclick="useJoker('block',${t.id})">${t.name} sperren</button>`
+  ).join('');
+  let el = document.getElementById('block-picker');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'block-picker';
+    el.className = 'joker-row';
+    const jokerRow = document.querySelector('.joker-row');
+    if (jokerRow) jokerRow.parentNode.insertBefore(el, jokerRow.nextSibling);
+    else document.getElementById('app')?.appendChild(el);
+  }
+  el.innerHTML = html;
+}
+
+// ==================== Emoji Reactions ====================
+function renderEmojiBar() {
+  if (joinedTeamId === null) return '';
+  return `<div class="emoji-bar">
+    ${['👏','😂','🔥','😱','💀','🤔','❤️','👎'].map(e =>
+      `<button class="emoji-btn" onclick="sendEmoji('${e}')">${e}</button>`
+    ).join('')}
+  </div>`;
+}
+
+function sendEmoji(emoji) {
+  socket.emit('emoji-react', emoji);
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
 // ==================== Actions ====================
 function buzz() {
   if (hasBuzzed || isEliminated || buzzerLocked) return;
   hasBuzzed = true;
   socket.emit('buzz');
+  // Haptic feedback
+  if (navigator.vibrate) navigator.vibrate(100);
   updateBuzzerUI();
 }
 

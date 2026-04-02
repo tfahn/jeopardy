@@ -982,3 +982,96 @@ input:focus {
 .hc-team-name { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
 .hc-team-msgs { max-height: 100px; overflow-y: auto; padding: 4px 0; }
 .hc-msg { font-size: 13px; padding: 2px 0; color: rgba(255,255,255,0.8); }
+
+/* ========== Score Fly Animation ========== */
+.score-fly {
+  position: fixed; top: 40%; left: 50%; transform: translateX(-50%);
+  font-size: 48px; font-weight: 900; z-index: 500;
+  text-shadow: 0 0 20px rgba(0,0,0,0.8);
+  animation: scoreFly 2s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes scoreFly {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-100px) scale(1.3); }
+}
+
+/* ========== Daily Double ========== */
+.daily-double-overlay {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100vh; animation: ddPulse 1s ease infinite;
+}
+.dd-star { font-size: 120px; color: var(--gold); animation: ddSpin 2s linear infinite; }
+@keyframes ddSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.dd-title { font-size: 64px; color: var(--gold); text-shadow: 0 0 30px rgba(255,204,0,0.5); margin: 20px 0; }
+.dd-team { font-size: 28px; }
+.dd-category { font-size: 20px; color: var(--gray); margin-top: 10px; }
+@keyframes ddPulse {
+  0%, 100% { background: var(--bg); }
+  50% { background: rgba(255,204,0,0.05); }
+}
+
+/* ========== Joker Banners ========== */
+.joker-banner {
+  position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+  padding: 8px 24px; border-radius: 20px; font-size: 18px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 2px; z-index: 100;
+  animation: jokerPop 0.5s ease;
+}
+.double-banner { background: var(--gold); color: var(--bg); }
+.block-banner { background: var(--red); color: white; top: 110px; }
+.dd-banner { background: var(--gold); color: var(--bg); }
+@keyframes jokerPop {
+  0% { transform: translateX(-50%) scale(0); }
+  50% { transform: translateX(-50%) scale(1.2); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* ========== Joker Buttons (Player) ========== */
+.joker-row { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+.joker-btn {
+  padding: 10px 16px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.05); color: white; font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: all 0.2s;
+}
+.joker-btn:hover { transform: scale(1.05); }
+.joker-double { border-color: var(--gold); color: var(--gold); }
+.joker-block { border-color: var(--red); color: var(--red); }
+
+/* ========== Endscreen ========== */
+.endscreen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100vh; text-align: center;
+}
+.endscreen h1 { font-size: 64px; color: var(--gold); margin-bottom: 30px; }
+.podium { display: flex; gap: 20px; align-items: flex-end; margin: 30px 0; }
+.podium-entry { display: flex; flex-direction: column; align-items: center; }
+.podium-bar { width: 120px; border-radius: 12px 12px 0 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 15px; }
+.podium-name { font-size: 18px; font-weight: 800; margin-top: 8px; }
+.podium-score { font-size: 24px; font-weight: 900; color: var(--gold); }
+.podium-rank { font-size: 36px; margin-bottom: 10px; }
+
+/* ========== Emoji Reactions ========== */
+.emoji-fly {
+  position: fixed; bottom: 10%; font-size: 48px; z-index: 400;
+  pointer-events: none; animation: emojiFloat 3s ease-out forwards;
+}
+@keyframes emojiFloat {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60vh) scale(1.5); }
+}
+.emoji-bar {
+  display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
+  padding: 8px 0; margin-top: 15px;
+}
+.emoji-btn {
+  font-size: 24px; background: none; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 4px 8px; cursor: pointer;
+  transition: transform 0.15s;
+}
+.emoji-btn:active { transform: scale(1.3); }
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}

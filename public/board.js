@@ -5,6 +5,8 @@ let answerShown = false;
 let revealedTeamAnswers = [];
 let mapInstance = null;
 let mapMarkers = [];
+let lastMapResults = null; // preserve map results across re-renders
+let audioWasPlaying = false; // preserve audio playback state across re-renders
 let audioCtx = null;
 
 function getAudioCtx() {
@@ -100,10 +102,37 @@ function sfxSelect() {
   osc.start(); osc.stop(ctx.currentTime + 0.2);
 }
 
-function sfxPoints(positive) {
-  if (positive) sfxCorrect();
-  else sfxWrong();
+function sfxDailyDouble() {
+  const ctx = getAudioCtx();
+  // Dramatic ascending notes
+  [330, 440, 554, 660, 880].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    const t = ctx.currentTime + i * 0.15;
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+    osc.start(t); osc.stop(t + 0.4);
+  });
 }
+
+function sfxJoker() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(600, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.2);
+  osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.4);
+  gain.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+  osc.start(); osc.stop(ctx.currentTime + 0.5);
+}
+
+let boardVolume = 1.0;
 
 // Audio unlock overlay — board needs one click before sounds work
 (function() {
@@ -124,21 +153,65 @@ socket.on('sfx', type => {
   if (type === 'correct') sfxCorrect();
   else if (type === 'wrong') sfxWrong();
   else if (type === 'select') sfxSelect();
+  else if (type === 'dailyDouble') sfxDailyDouble();
+  else if (type === 'joker') sfxJoker();
 });
 
+socket.on('emoji-react', data => {
+  const el = document.createElement('div');
+  el.className = 'emoji-fly';
+  el.textContent = data.emoji;
+  el.style.left = (10 + Math.random() * 80) + '%';
+  el.style.color = data.teamColor;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+});
+
+socket.on('score-change', data => {
+  showScoreAnimation(data.delta, data.teamColor, data.teamName);
+});
+
+socket.on('set-volume', vol => {
+  boardVolume = vol;
+  document.querySelectorAll('audio, video').forEach(el => { el.volume = vol; });
+});
+
+function showScoreAnimation(delta, color, teamName) {
+  const el = document.createElement('div');
+  el.className = 'score-fly';
+  el.style.color = color;
+  el.textContent = `${delta > 0 ? '+' : ''}${delta} ${teamName}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+function goFullscreen() {
+  document.documentElement.requestFullscreen?.() || document.documentElement.webkitRequestFullscreen?.();
+}
+
 socket.on('state', s => {
-  const prevPhase = state?.phase;
-  const prevQuestion = state?.currentQuestion;
-  const questionChanged = !state || state.phase !== s.phase ||
-    prevQuestion?.row !== s.currentQuestion?.row ||
-    prevQuestion?.col !== s.currentQuestion?.col;
+  const prev = state;
+  const questionChanged = !prev || prev.phase !== s.phase ||
+    prev.currentQuestion?.row !== s.currentQuestion?.row ||
+    prev.currentQuestion?.col !== s.currentQuestion?.col;
+  // Detect changes that need partial re-render (not full)
+  const lineupChanged = prev?.lineupRevealed !== s.lineupRevealed;
+  const jokersChanged = prev?.activeJokers?.double !== s.activeJokers?.double ||
+    prev?.activeJokers?.blocked !== s.activeJokers?.blocked;
   state = s;
   if (questionChanged) {
     answerShown = false;
     revealedTeamAnswers = [];
+    lastMapResults = null;
     render();
+  } else if (lineupChanged || jokersChanged) {
+    // Targeted updates without full re-render (preserves audio/video playback)
+    if (s.phase === 'question') {
+      if (lineupChanged) updateLineupHints();
+      if (jokersChanged) updateJokerBanners();
+    }
+    updateScores();
   } else {
-    // Only update scores without full re-render
     updateScores();
   }
 });
@@ -146,13 +219,33 @@ socket.on('state', s => {
 socket.on('show-answer', data => {
   answerShown = data;
   sfxReveal();
+  // Save current blur states before re-render
+  const blurStates = {};
+  document.querySelectorAll('img.question-image').forEach((img, i) => {
+    const computed = getComputedStyle(img).filter;
+    const match = computed && computed.match(/blur\(([0-9.]+)px\)/);
+    blurStates[i] = match ? parseFloat(match[1]) : 0;
+  });
   renderQuestion();
+  // Restore blur states (continue from where they were)
+  document.querySelectorAll('img.question-image').forEach((img, i) => {
+    if (blurStates[i] !== undefined && blurStates[i] > 0 && img.classList.contains('blur-reveal')) {
+      const remaining = (blurStates[i] / 50) * 30;
+      img.classList.remove('blur-reveal');
+      img.style.filter = `blur(${blurStates[i]}px)`;
+      void img.offsetWidth;
+      img.style.transition = `filter ${remaining}s linear`;
+      img.style.filter = 'blur(0px)';
+    } else if (blurStates[i] !== undefined && blurStates[i] === 0 && img.classList.contains('blur-reveal')) {
+      // Was already fully revealed — remove animation
+      img.classList.remove('blur-reveal');
+      img.style.filter = 'none';
+    }
+  });
 });
 
 socket.on('buzzer-locked', data => {
   if (!state) return;
-  if (!state.buzzes) state.buzzes = [];
-  if (data.playerName) state.buzzes.push(data);
   state.buzzerLocked = true;
   sfxBuzz();
   // Auto-pause any playing media
@@ -194,6 +287,7 @@ socket.on('media-control', action => {
 });
 
 socket.on('map-results', data => {
+  lastMapResults = data;
   showMapResults(data);
 });
 
@@ -225,12 +319,14 @@ function showBoardTimer(sec) {
 function removeBoardTimer() { document.getElementById('board-timer')?.remove(); }
 
 function pauseAllMedia() {
+  audioWasPlaying = false;
   document.querySelectorAll('audio, video').forEach(el => el.pause());
   document.getElementById('audio-viz')?.classList.remove('audio-playing');
 }
 
 function playAllMedia() {
-  document.querySelectorAll('audio, video').forEach(el => el.play());
+  audioWasPlaying = true;
+  document.querySelectorAll('audio, video').forEach(el => { el.volume = boardVolume; el.play(); });
   document.getElementById('audio-viz')?.classList.add('audio-playing');
 }
 
@@ -238,7 +334,85 @@ function render() {
   if (!state) return;
   if (state.phase === 'lobby') renderLobby();
   else if (state.phase === 'board') renderBoard();
+  else if (state.phase === 'dailyDouble') renderDailyDouble();
   else if (state.phase === 'question') renderQuestion();
+  else if (state.phase === 'endscreen') renderEndscreen();
+}
+
+function renderEndscreen() {
+  const sorted = [...state.teams].sort((a, b) => b.score - a.score);
+  const heights = [240, 180, 140];
+  const ranks = ['🥇', '🥈', '🥉'];
+  // Reorder for podium: 2nd, 1st, 3rd
+  const podiumOrder = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : sorted;
+
+  app.innerHTML = `
+    <div class="endscreen">
+      <h1>GAME OVER!</h1>
+      <div class="podium">
+        ${podiumOrder.map((t, i) => {
+          const realRank = sorted.indexOf(t);
+          const h = heights[realRank] || 100;
+          return `
+            <div class="podium-entry">
+              <div class="podium-score">${t.score}</div>
+              <div class="podium-bar" style="height:${h}px;background:${t.color};">
+                <span class="podium-rank">${ranks[realRank] || realRank + 1}</span>
+              </div>
+              <div class="podium-name" style="color:${t.color};">${t.name}</div>
+            </div>`;
+        }).join('')}
+      </div>
+      ${sorted.length > 3 ? sorted.slice(3).map((t, i) => `
+        <div style="font-size:18px;margin:4px 0;color:${t.color};">${i + 4}. ${t.name} — ${t.score}P</div>
+      `).join('') : ''}
+    </div>`;
+  // Confetti!
+  launchConfetti();
+}
+
+function launchConfetti() {
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:fixed;top:-10px;left:${Math.random()*100}%;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${['var(--gold)','var(--red)','var(--green)','var(--blue-mid)','#fff','#e67e22','#9b59b6'][Math.floor(Math.random()*7)]};z-index:9999;pointer-events:none;border-radius:${Math.random()>0.5?'50%':'2px'};animation:confettiFall ${2+Math.random()*3}s linear ${Math.random()*2}s forwards;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 6000);
+  }
+}
+
+function updateLineupHints() {
+  const el = document.querySelector('.lineup-hints');
+  if (!el || !state.currentQuestion) return;
+  const hints = state.currentQuestion.hints || [];
+  const revealed = state.lineupRevealed || 0;
+  el.innerHTML = hints.map((h, i) => `
+    <div class="lineup-hint ${i < revealed ? 'revealed' : ''}" style="animation-delay:${i * 0.1}s;">
+      <span class="lineup-number">${i + 1}</span>
+      <span class="lineup-text">${i < revealed ? h : '???'}</span>
+    </div>
+  `).join('');
+}
+
+function updateJokerBanners() {
+  // Remove old banners
+  document.querySelectorAll('.joker-banner').forEach(el => el.remove());
+  if (!state.activeJokers) return;
+  const overlay = document.querySelector('.question-overlay');
+  if (!overlay) return;
+  if (state.activeJokers.double !== null) {
+    const jTeam = state.teams.find(t => t.id === state.activeJokers.double);
+    const banner = document.createElement('div');
+    banner.className = 'joker-banner double-banner';
+    banner.textContent = `DOPPEL! (${jTeam?.name || '?'})`;
+    overlay.prepend(banner);
+  }
+  if (state.activeJokers.blocked !== null) {
+    const bTeam = state.teams.find(t => t.id === state.activeJokers.blocked);
+    const banner = document.createElement('div');
+    banner.className = 'joker-banner block-banner';
+    banner.textContent = `${bTeam?.name || '?'} GESPERRT!`;
+    overlay.prepend(banner);
+  }
 }
 
 function updateScores() {
@@ -255,11 +429,15 @@ function updateScores() {
 }
 
 function renderLobby() {
+  const playerUrl = window.location.origin + '/player.html';
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=FFD700&bgcolor=0A0A2E&data=${encodeURIComponent(playerUrl)}`;
   app.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;">
-      <h1 style="font-size:64px;color:var(--gold);margin-bottom:20px;">JEOPARDY</h1>
-      <p style="font-size:24px;color:var(--gray);">Warte auf Spielstart...</p>
-      <div style="margin-top:30px;">
+      <h1 style="font-size:72px;color:var(--gold);margin-bottom:10px;">JEOPARDY</h1>
+      <p style="font-size:20px;color:var(--gray);margin-bottom:20px;">Scannt den QR-Code um mitzuspielen!</p>
+      <img src="${qrUrl}" alt="QR Code" style="border-radius:12px;border:3px solid var(--gold);margin-bottom:15px;">
+      <p style="font-size:14px;color:var(--gray);margin-bottom:30px;">${playerUrl}</p>
+      <div style="margin-top:10px;">
         ${state.teams.map(t => `
           <div style="display:flex;align-items:center;gap:12px;margin:10px 0;">
             <div style="width:20px;height:20px;border-radius:50%;background:${t.color};"></div>
@@ -268,6 +446,19 @@ function renderLobby() {
           </div>
         `).join('')}
       </div>
+      <button onclick="goFullscreen()" style="margin-top:20px;padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:none;color:var(--gray);cursor:pointer;font-size:14px;">Vollbild</button>
+    </div>`;
+}
+
+function renderDailyDouble() {
+  if (!state.currentQuestion) return;
+  const team = state.teams[state.dailyDoubleTeam];
+  app.innerHTML = `
+    <div class="daily-double-overlay">
+      <div class="dd-star">&#9733;</div>
+      <h1 class="dd-title">DAILY DOUBLE!</h1>
+      <p class="dd-team" style="color:${team?.color || '#fff'};">${team?.name || '?'} setzt Punkte...</p>
+      <p class="dd-category">${state.currentQuestion.category} — ${state.currentQuestion.points}P</p>
     </div>`;
 }
 
@@ -287,6 +478,7 @@ function renderBoard() {
     for (let c = 0; c < 5; c++) {
       const cell = state.board[r][c];
       gridHtml += `<div class="board-cell ${cell.used ? 'used' : ''}">${cell.used ? '' : cell.points}</div>`;
+      // Don't show DD marker to players - it's a surprise!
     }
   }
 
@@ -300,7 +492,6 @@ function renderQuestion() {
   const q = state.currentQuestion;
 
   const contentBlocks = Array.isArray(q.content) ? q.content : [q.content];
-  const isBuzzerType = (q.type === 'buzzer' || q.type === 'lineup');
   let contentHtml = '<div class="question-content">';
   for (const block of contentBlocks) {
     if (block.type === 'text' && block.text) {
@@ -369,9 +560,27 @@ function renderQuestion() {
     </div>
   `).join('');
 
+  // Active joker banners
+  let jokerBanner = '';
+  if (state.activeJokers?.double !== null) {
+    const jTeam = state.teams.find(t => t.id === state.activeJokers.double);
+    jokerBanner += `<div class="joker-banner double-banner">DOPPEL! (${jTeam?.name || '?'})</div>`;
+  }
+  if (state.activeJokers?.blocked !== null) {
+    const bTeam = state.teams.find(t => t.id === state.activeJokers.blocked);
+    jokerBanner += `<div class="joker-banner block-banner">${bTeam?.name || '?'} GESPERRT!</div>`;
+  }
+  // Daily Double wager
+  let ddBanner = '';
+  if (state.dailyDoubleWager) {
+    const ddTeam = state.teams[state.dailyDoubleTeam];
+    ddBanner = `<div class="joker-banner dd-banner">DAILY DOUBLE — Einsatz: ${state.dailyDoubleWager} (${ddTeam?.name || '?'})</div>`;
+  }
+
   app.innerHTML = `
     <div class="question-overlay">
       <div class="scoreboard" style="position:absolute;top:10px;left:0;right:0;">${scoreHtml}</div>
+      ${jokerBanner}${ddBanner}
       <span class="question-type-badge ${badgeClass}">${typeName}</span>
       <div class="question-meta">${q.category}</div>
       <div class="question-points">${q.points}</div>
@@ -383,7 +592,10 @@ function renderQuestion() {
     </div>`;
 
   if (q.type === 'map') {
-    setTimeout(() => initBoardMap(), 100);
+    setTimeout(() => {
+      initBoardMap();
+      if (lastMapResults) showMapResults(lastMapResults);
+    }, 100);
   }
   if ((q.type === 'buzzer' || q.type === 'lineup') && state.buzzes) {
     renderBuzzes();
