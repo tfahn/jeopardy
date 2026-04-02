@@ -521,6 +521,14 @@ function renderTeamChat() {
     </div>`;
   }).join('');
 
+  // If chat panel already exists, only update messages (preserve input)
+  const existingMsgs = document.getElementById('tc-messages');
+  if (existingMsgs) {
+    existingMsgs.innerHTML = msgsHtml;
+    existingMsgs.scrollTop = existingMsgs.scrollHeight;
+    return;
+  }
+
   widget.innerHTML = `
     <div class="tc-panel">
       <div class="tc-header">
