@@ -292,6 +292,7 @@ function renderQuestionControl() {
         <div class="host-answer"><b>Antwort:</b> ${esc(q.answer)}</div>
         ${q.secret ? `<p style="margin-top:6px;color:var(--gray);">Geheim: <b style="color:var(--gold);">${esc(q.secret)}</b></p>` : ''}
         ${q.target ? `<p style="margin-top:6px;color:var(--gray);">Ziel: ${q.target.lat.toFixed(2)}, ${q.target.lng.toFixed(2)}</p>` : ''}
+        ${state.remainingQuestions <= 3 ? `<p style="margin-top:6px;color:var(--red);font-weight:800;">FINALE — ALLE PUNKTE ×2!</p>` : ''}
         ${state.activeJokers?.double !== null ? `<p style="margin-top:6px;color:var(--gold);font-weight:800;">DOPPEL-JOKER AKTIV! (${state.teams.find(t=>t.id===state.activeJokers.double)?.name})</p>` : ''}
         ${state.activeJokers?.blocked !== null ? `<p style="margin-top:6px;color:var(--red);font-weight:800;">${state.teams.find(t=>t.id===state.activeJokers.blocked)?.name} GEBLOCKT!</p>` : ''}
         ${state.dailyDoubleWager ? `<p style="margin-top:6px;color:var(--gold);font-weight:800;">DAILY DOUBLE — Einsatz: ${state.dailyDoubleWager}</p>` : ''}

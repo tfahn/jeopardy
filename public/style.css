@@ -115,6 +115,17 @@ body {
   cursor: default;
 }
 
+.board-cell.finale-double {
+  background: linear-gradient(135deg, var(--blue-mid), #8b1a1a);
+  animation: finale-pulse 1.5s ease-in-out infinite;
+  font-size: 28px;
+}
+
+@keyframes finale-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 50, 50, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(255, 50, 50, 0.8); }
+}
+
 /* ========== Question Overlay ========== */
 .question-overlay {
   position: fixed;

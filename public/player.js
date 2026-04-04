@@ -120,9 +120,22 @@ function updateSubmitStatus() {
     buzzBtn.textContent = 'GEBLOCKT';
     buzzBtn.classList.add('buzzed');
   }
-  // Update joker buttons visibility
-  const jokerRow = document.querySelector('.joker-row');
-  if (jokerRow) jokerRow.innerHTML = renderJokerButtons().replace(/<\/?div[^>]*class="joker-row"[^>]*>/g, '');
+
+  // Timer expired — lock all inputs
+  if (state.timerExpired) {
+    if (buzzBtn) { buzzBtn.disabled = true; buzzBtn.textContent = 'ZEIT ABGELAUFEN'; buzzBtn.classList.add('buzzed'); }
+    const submitBtn = document.querySelector('.submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Zeit abgelaufen!'; }
+    const estimateInput = document.getElementById('estimate-input');
+    if (estimateInput) estimateInput.disabled = true;
+    const mapBtn = document.getElementById('map-submit-btn');
+    if (mapBtn) { mapBtn.disabled = true; mapBtn.textContent = 'Zeit abgelaufen!'; }
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) chatInput.disabled = true;
+    const chatBtn = document.querySelector('.chat-send-btn');
+    if (chatBtn) { chatBtn.disabled = true; chatBtn.textContent = 'Zeit abgelaufen!'; }
+    return;
+  }
 
   // Question phase: only update submission state, preserve inputs/map
   const submitted = state.teamAnswer?.submitted;
@@ -210,6 +223,7 @@ function renderWaiting() {
           </div>
         `).join('')}
       </div>
+      ${renderJokerButtons()}
       ${renderEmojiBar()}
     </div>`;
 }
@@ -267,16 +281,18 @@ function renderQuestion() {
   if (state.activeJokers?.blocked === joinedTeamId) {
     blockedBanner = '<div style="background:var(--red);color:white;text-align:center;padding:10px;border-radius:8px;margin-bottom:10px;font-weight:800;">Ihr seid gesperrt diese Runde!</div>';
   }
-  let jokerHtml = renderJokerButtons();
+  // Show active joker/auto-double indicators (but no joker buttons — jokers must be used before question selection)
+  let doubleIndicator = '';
+  if (state.remainingQuestions <= 3) doubleIndicator = ' ×2 FINALE';
+  if (state.activeJokers?.double !== null) doubleIndicator += ' ×2 JOKER';
 
   app.innerHTML = `
     <div class="question-info-player">
       <div class="cat">${esc(q.category)} — ${typeName}</div>
-      <div class="pts">${q.points}${state.activeJokers?.double !== null ? ' ×2' : ''}${state.dailyDoubleWager ? ' DD' : ''}</div>
+      <div class="pts">${q.points}${doubleIndicator}${state.dailyDoubleWager ? ' DD' : ''}</div>
       ${contentHtml ? `<div class="text">${contentHtml}</div>` : ''}
     </div>
     ${blockedBanner}
-    ${jokerHtml}
     ${interactionHtml}
     ${renderEmojiBar()}`;
 
@@ -401,6 +417,7 @@ function submitWager() {
 
 // ==================== Joker Buttons ====================
 function renderJokerButtons() {
+  if (state.phase !== 'board') return '';
   if (joinedTeamId === null || !state.jokers) return '';
   const myJokers = state.jokers[joinedTeamId];
   if (!myJokers || (!myJokers.double && !myJokers.block)) return '';

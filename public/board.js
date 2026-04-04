@@ -399,11 +399,17 @@ function updateJokerBanners() {
   if (!state.activeJokers) return;
   const overlay = document.querySelector('.question-overlay');
   if (!overlay) return;
+  if (state.remainingQuestions <= 3) {
+    const banner = document.createElement('div');
+    banner.className = 'joker-banner double-banner';
+    banner.textContent = 'FINALE — ALLE PUNKTE ×2!';
+    overlay.prepend(banner);
+  }
   if (state.activeJokers.double !== null) {
     const jTeam = state.teams.find(t => t.id === state.activeJokers.double);
     const banner = document.createElement('div');
     banner.className = 'joker-banner double-banner';
-    banner.textContent = `DOPPEL! (${jTeam?.name || '?'})`;
+    banner.textContent = `DOPPEL-JOKER! (${jTeam?.name || '?'})`;
     overlay.prepend(banner);
   }
   if (state.activeJokers.blocked !== null) {
@@ -474,11 +480,12 @@ function renderBoard() {
   for (let c = 0; c < 5; c++) {
     gridHtml += `<div class="category-header">${state.categories[c] || ''}</div>`;
   }
+  const isFinale = state.remainingQuestions <= 3;
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) {
       const cell = state.board[r][c];
-      gridHtml += `<div class="board-cell ${cell.used ? 'used' : ''}">${cell.used ? '' : cell.points}</div>`;
-      // Don't show DD marker to players - it's a surprise!
+      const finaleClass = (!cell.used && isFinale) ? ' finale-double' : '';
+      gridHtml += `<div class="board-cell ${cell.used ? 'used' : ''}${finaleClass}">${cell.used ? '' : (isFinale ? cell.points + ' ×2' : cell.points)}</div>`;
     }
   }
 
@@ -560,11 +567,14 @@ function renderQuestion() {
     </div>
   `).join('');
 
-  // Active joker banners
+  // Active joker/finale banners
   let jokerBanner = '';
+  if (state.remainingQuestions <= 3) {
+    jokerBanner += `<div class="joker-banner double-banner">FINALE — ALLE PUNKTE ×2!</div>`;
+  }
   if (state.activeJokers?.double !== null) {
     const jTeam = state.teams.find(t => t.id === state.activeJokers.double);
-    jokerBanner += `<div class="joker-banner double-banner">DOPPEL! (${jTeam?.name || '?'})</div>`;
+    jokerBanner += `<div class="joker-banner double-banner">DOPPEL-JOKER! (${jTeam?.name || '?'})</div>`;
   }
   if (state.activeJokers?.blocked !== null) {
     const bTeam = state.teams.find(t => t.id === state.activeJokers.blocked);

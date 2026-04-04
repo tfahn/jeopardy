@@ -76,6 +76,9 @@ const game = {
   answerHistory: [],   // [{ category, points, type, answer, correct: teamId|null }]
   // Volume
   volume: 1.0,
+  // Timer
+  timerExpired: false,
+  timerId: null,
 };
 
 function loadQuestions(filename) {
@@ -157,6 +160,16 @@ function getAnswerPlayerIndex(q, team) {
   return q.answerPlayer ?? 0;
 }
 
+function getRemainingQuestions() {
+  let count = 0;
+  for (let r = 0; r < game.board.length; r++) {
+    for (let c = 0; c < game.board[r].length; c++) {
+      if (!game.board[r][c].used) count++;
+    }
+  }
+  return count;
+}
+
 function clientState(role, socketId) {
   const s = {
     phase: game.phase,
@@ -171,6 +184,8 @@ function clientState(role, socketId) {
     activeJokers: game.activeJokers,
     dailyDoubleWager: game.dailyDoubleWager,
     dailyDoubleTeam: game.dailyDoubleTeam,
+    remainingQuestions: getRemainingQuestions(),
+    timerExpired: game.timerExpired,
   };
 
   if (game.currentQuestion) {
@@ -397,7 +412,9 @@ io.on('connection', socket => {
     game.chatRevealed = [];
     game.revealedAnswers = [];
     game.lineupRevealed = 0;
-    game.activeJokers = { double: null, blocked: null };
+    // Don't reset activeJokers here — jokers are set during board phase before question selection
+    if (game.timerId) { clearTimeout(game.timerId); game.timerId = null; }
+    game.timerExpired = false;
     game.dailyDoubleWager = null;
     game.dailyDoubleTeam = null;
 
@@ -413,8 +430,9 @@ io.on('connection', socket => {
     broadcast();
   });
 
-  // ---- Jokers ----
+  // ---- Jokers (must be used during board phase, before selecting a question) ----
   socket.on('use-joker', ({ type, targetTeamId }) => {
+    if (game.phase !== 'board') return;
     const teamId = socket.data.teamId;
     if (teamId === undefined) return;
     if (!game.jokers[teamId]) return;
@@ -461,6 +479,7 @@ io.on('connection', socket => {
   // ---- Buzzer ----
   socket.on('buzz', () => {
     if (game.phase !== 'question') return;
+    if (game.timerExpired) return;
     const t = game.currentQuestion?.type;
     if (t !== 'buzzer' && t !== 'lineup') return;
     if (game.buzzerLocked) return;
@@ -493,6 +512,7 @@ io.on('connection', socket => {
   // ---- Submit team answer (estimate / map) ----
   socket.on('submit-team-answer', value => {
     if (game.phase !== 'question') return;
+    if (game.timerExpired) return;
     const teamId = socket.data.teamId;
     if (teamId === undefined) return;
     if (game.teamAnswers[teamId]?.submitted) return;
@@ -507,6 +527,7 @@ io.on('connection', socket => {
   // ---- Chat ----
   socket.on('chat-send', message => {
     if (game.phase !== 'question') return;
+    if (game.timerExpired) return;
     if (!game.currentQuestion || game.currentQuestion.type !== 'chat') return;
     const teamId = socket.data.teamId;
     if (teamId === undefined) return;
@@ -554,9 +575,31 @@ io.on('connection', socket => {
 
   // ---- Timer ----
   socket.on('start-timer', seconds => {
+    if (game.timerId) clearTimeout(game.timerId);
+    game.timerExpired = false;
     io.emit('start-timer', seconds);
+    game.timerId = setTimeout(() => {
+      game.timerExpired = true;
+      game.timerId = null;
+      // Lock buzzer when timer expires
+      game.buzzerLocked = true;
+      // Auto-submit empty answers for teams that haven't submitted
+      for (const team of game.teams) {
+        if (!game.teamAnswers[team.id]?.submitted && game.currentQuestion) {
+          const t = game.currentQuestion.type;
+          if (t === 'estimate' || t === 'map') {
+            game.teamAnswers[team.id] = { value: game.teamAnswers[team.id]?.value || null, submitted: true };
+          }
+        }
+        if (!game.teamChat[team.id]?.sent && game.currentQuestion?.type === 'chat') {
+          game.teamChat[team.id] = { message: '', sent: true, playerName: '(Zeit abgelaufen)' };
+        }
+      }
+      broadcast();
+    }, seconds * 1000);
   });
   socket.on('stop-timer', () => {
+    if (game.timerId) { clearTimeout(game.timerId); game.timerId = null; }
     io.emit('stop-timer');
   });
 
@@ -566,7 +609,10 @@ io.on('connection', socket => {
     const team = game.teams.find(t => t.id === teamId);
     if (team) {
       let multiplier = 1;
-      if (game.activeJokers.double !== null) multiplier = 2;
+      // Auto-double for last 3 remaining questions on the board
+      if (getRemainingQuestions() <= 3) multiplier = 2;
+      // Joker double stacks on top (so last-3 + joker = x4)
+      if (game.activeJokers.double !== null) multiplier *= 2;
       if (game.dailyDoubleWager && team.id === game.teams[game.dailyDoubleTeam]?.id) {
         // Daily Double: use wager instead of question points (with multiplier)
         const wagerPts = points > 0 ? game.dailyDoubleWager * multiplier : -game.dailyDoubleWager * multiplier;
@@ -627,6 +673,8 @@ io.on('connection', socket => {
     game.revealedAnswers = [];
     game.lineupRevealed = 0;
     game.activeJokers = { double: null, blocked: null };
+    if (game.timerId) { clearTimeout(game.timerId); game.timerId = null; }
+    game.timerExpired = false;
     game.dailyDoubleWager = null;
     game.dailyDoubleTeam = null;
     game.currentTeamIndex = (game.currentTeamIndex + 1) % Math.max(game.teams.length, 1);
